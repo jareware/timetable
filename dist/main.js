@@ -19,6 +19,7 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var apiUrl = "https://api.digitransit.fi/routing/v1/routers/hsl/index/graphql";
+var refreshInterval = 30000;
 
 var StopSearch = function (_React$Component) {
   _inherits(StopSearch, _React$Component);
@@ -147,17 +148,21 @@ var TimeTable = function (_React$Component2) {
 
     var stopId = props.stopId;
     _this3.queryStop(stopId);
+    _this3.startRefresher(stopId);
 
     _this3.state = {
       stop: stopId ? { 'id': stopId } : '',
       timetable: []
     };
-
-    _this3.queryStop = _lodash2.default.debounce(_this3.queryStop, 500);
     return _this3;
   }
 
   _createClass(TimeTable, [{
+    key: 'startRefresher',
+    value: function startRefresher(stopId) {
+      setInterval(this.queryStop.bind(this, stopId), refreshInterval);
+    }
+  }, {
     key: 'queryStop',
     value: function queryStop(stopId) {
       var _this4 = this;

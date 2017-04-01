@@ -1,7 +1,8 @@
 import _ from 'lodash';
 import fetch from 'node-fetch';
 
-let apiUrl = "https://api.digitransit.fi/routing/v1/routers/hsl/index/graphql";
+const apiUrl = "https://api.digitransit.fi/routing/v1/routers/hsl/index/graphql";
+const refreshInterval = 30000;
 
 class StopSearch extends React.Component {
   constructor(props) {
@@ -81,13 +82,16 @@ class TimeTable extends React.Component {
 
     let stopId = props.stopId;
     this.queryStop(stopId);
+    this.startRefresher(stopId);
 
     this.state = {
       stop: stopId ? {'id': stopId} : '',
       timetable: [],
     };
+  }
 
-    this.queryStop = _.debounce(this.queryStop, 500);
+  startRefresher(stopId) {
+    setInterval(this.queryStop.bind(this, stopId), refreshInterval);
   }
 
   queryStop(stopId) {
@@ -116,8 +120,8 @@ class TimeTable extends React.Component {
   }
 
   parseTime(secs) {
-    var hours = Math.floor(secs/(60*60));
-    var minutes = Math.floor((secs - hours*60*60)/60);
+    let hours = Math.floor(secs/(60*60));
+    let minutes = Math.floor((secs - hours*60*60)/60);
     if (hours < 10) { hours = '0'+hours }
     if (minutes < 10) {minutes = '0'+minutes }
     return hours + ':' + minutes;

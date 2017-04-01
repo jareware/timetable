@@ -1,4 +1,4 @@
-{"query":"query StopPage($id_0:String!,$startTime_1:Long!) {stop(id:$id_0) {id,...F1}} fragment F0 on Stoptime {realtimeDeparture,scheduledDeparture,realtime,stopHeadsign,trip {pattern {route {shortName}}}} fragment F1 on Stop {url,_stoptimesWithoutPatterns3xYh4D:stoptimesWithoutPatterns(startTime:$startTime_1,timeRange:3600,numberOfDepartures:10) {...F0},id,code,name}","variables":{"id_0":"HSL:2212240","startTime_1":1491065068}}
+{"query":"query StopPage($id_0:String!,$startTime_1:Long!) {stop(id:$id_0) {id,...F1}} fragment F0 on Stoptime {realtimeDeparture,scheduledDeparture,realtime,stopHeadsign,trip {pattern {route {shortName}}}} fragment F1 on Stop {_stoptimesWithoutPatterns3xYh4D:stoptimesWithoutPatterns(startTime:$startTime_1,timeRange:3600,numberOfDepartures:10) {...F0},code,name}","variables":{"id_0":"HSL:2212240","startTime_1":1491065068}}
 
 
 
