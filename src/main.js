@@ -9,7 +9,7 @@ class StopForm extends React.Component {
     this.state = {
       stop: stop,
       timetable: timetable,
-      value: 'E2114',
+      value: '',
       results: []
     };
 
@@ -38,15 +38,10 @@ class StopForm extends React.Component {
     return timetable;
   }
 
-  componentDidMount(){
-    if (!this.state.stop) {
-      this.nameInput.focus();
-    }
-  }
-
   handleChange(event) {
     // TODO: get actual results
-    let results = [{'id': event.target.value}];
+    let newVal = event.target.value;
+    let results = newVal ? [{'id': newVal}] : [];
     this.setState({value: event.target.value, results: results});
   }
 
@@ -62,14 +57,19 @@ class StopForm extends React.Component {
       </a>
     );
 
-    return (
-      <div className="stop-search-results">
-        <h3>Tulokset</h3>
-        <div className="list-group">
-          { resultsList }
+    let content;
+    if (resultsList.length) {
+      content = (
+        <div className="stop-search-results">
+          <h3>Tulokset</h3>
+          <div className="list-group">
+            { resultsList }
+          </div>
         </div>
-      </div>
-    );
+      );
+    }
+
+    return content;
   }
 
   timeTable() {

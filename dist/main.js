@@ -23,7 +23,7 @@ var StopForm = function (_React$Component) {
     _this.state = {
       stop: stop,
       timetable: timetable,
-      value: 'E2114',
+      value: '',
       results: []
     };
 
@@ -57,17 +57,11 @@ var StopForm = function (_React$Component) {
       return timetable;
     }
   }, {
-    key: 'componentDidMount',
-    value: function componentDidMount() {
-      if (!this.state.stop) {
-        this.nameInput.focus();
-      }
-    }
-  }, {
     key: 'handleChange',
     value: function handleChange(event) {
       // TODO: get actual results
-      var results = [{ 'id': event.target.value }];
+      var newVal = event.target.value;
+      var results = newVal ? [{ 'id': newVal }] : [];
       this.setState({ value: event.target.value, results: results });
     }
   }, {
@@ -95,20 +89,25 @@ var StopForm = function (_React$Component) {
         );
       });
 
-      return React.createElement(
-        'div',
-        { className: 'stop-search-results' },
-        React.createElement(
-          'h3',
-          null,
-          'Tulokset'
-        ),
-        React.createElement(
+      var content = void 0;
+      if (resultsList.length) {
+        content = React.createElement(
           'div',
-          { className: 'list-group' },
-          resultsList
-        )
-      );
+          { className: 'stop-search-results' },
+          React.createElement(
+            'h3',
+            null,
+            'Tulokset'
+          ),
+          React.createElement(
+            'div',
+            { className: 'list-group' },
+            resultsList
+          )
+        );
+      }
+
+      return content;
     }
   }, {
     key: 'timeTable',
