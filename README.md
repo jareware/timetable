@@ -3,7 +3,9 @@ A very simple HSL timetable showing "app". Select your bus stop and view the nex
 
 # Development
 Made with React.js and Bootstrap. 
-Requirements: python, sass and nodejs. 
+Requirements: python, sass, npm and nodejs.
+
+When starting for the first time, run ```npm install```.
 
 Do your edits to the files in `src/`.
 
@@ -22,3 +24,5 @@ node node_modules/babel-cli/bin/babel.js --presets es2015,react --watch src --ou
 ```
 sass --watch src/styles.scss:dist/styles.css
 ```
+
+Go to ```localhost:8000```.
