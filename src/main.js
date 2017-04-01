@@ -3,16 +3,16 @@ import fetch from 'node-fetch';
 
 let apiUrl = "https://api.digitransit.fi/routing/v1/routers/hsl/index/graphql";
 
-class StopForm extends React.Component {
+class TimeTable extends React.Component {
   constructor(props) {
     super(props);
 
     let stopId = this.getStopQueryParam();
-    let stop = this.getStopDetails(stopId);
+    this.queryStop(stopId);
     let timetable = this.getStopTimetable(stopId);
 
     this.state = {
-      stop: stop,
+      stop: stopId ? {'id': stopId} : '',
       timetable: timetable,
       value: '',
       results: []
@@ -23,14 +23,28 @@ class StopForm extends React.Component {
     this.queryStops = _.debounce(this.queryStops, 500);
   }
 
+  queryStop(stopId) {
+    if (stopId) {
+      fetch(apiUrl, {
+        method: 'POST',
+        body: JSON.stringify({"query": "{stop(id: \"" + stopId + "\") {name}}"}),
+        headers: { 'Content-Type': 'application/json' }
+      }).then(res => res.json())
+        .then(json => this.setState({
+          stop: {'id': stopId, 'name': json.data.stop ? json.data.stop.name : 'Pysäkki'}
+        }))
+        .catch(err => console.log(err));
+    }
+  }
+
   queryStops(name) {
     fetch(apiUrl, {
       method: 'POST',
       body: JSON.stringify({"query": "{stops(name: \"" + name + "\") {name gtfsId}}"}),
       headers: { 'Content-Type': 'application/json' }
-    })
-      .then(res => res.json())
-      .then(json => this.setState({results: json.data.stops}));
+    }).then(res => res.json())
+      .then(json => this.setState({results: json.data.stops}))
+      .catch(err => console.log(err));
   }
 
   getStopQueryParam() {
@@ -40,13 +54,6 @@ class StopForm extends React.Component {
     });
     let stopId = stopParam ? stopParam.split('=')[1] : '';
     return stopId;
-  }
-
-  getStopDetails(stopId) {
-    // TODO: get actual stop details (=name)
-    let stop = stopId ? {'id': stopId, 'name': 'Pysäkki'} : '';
-
-    return stop;
   }
 
   getStopTimetable(stopId) {
@@ -121,7 +128,7 @@ class StopForm extends React.Component {
       content = (
         <div className="timetable">
           <div className="stop-details">
-            <h4 className="list-group-item-heading">{ (stop.name || 'Pysäkki') + ' '}</h4>
+            <h4 className="list-group-item-heading">{ (stop.name || '') + ' '}</h4>
             <span className="list-group-item-text">{ stop.id || 'numero' }</span>
           </div>
           { this.timeTable() }
@@ -143,6 +150,6 @@ class StopForm extends React.Component {
 }
 
 ReactDOM.render(
-  <StopForm />,
+  <TimeTable />,
   document.getElementById('container')
 );

@@ -20,20 +20,20 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var apiUrl = "https://api.digitransit.fi/routing/v1/routers/hsl/index/graphql";
 
-var StopForm = function (_React$Component) {
-  _inherits(StopForm, _React$Component);
+var TimeTable = function (_React$Component) {
+  _inherits(TimeTable, _React$Component);
 
-  function StopForm(props) {
-    _classCallCheck(this, StopForm);
+  function TimeTable(props) {
+    _classCallCheck(this, TimeTable);
 
-    var _this = _possibleConstructorReturn(this, (StopForm.__proto__ || Object.getPrototypeOf(StopForm)).call(this, props));
+    var _this = _possibleConstructorReturn(this, (TimeTable.__proto__ || Object.getPrototypeOf(TimeTable)).call(this, props));
 
     var stopId = _this.getStopQueryParam();
-    var stop = _this.getStopDetails(stopId);
+    _this.queryStop(stopId);
     var timetable = _this.getStopTimetable(stopId);
 
     _this.state = {
-      stop: stop,
+      stop: stopId ? { 'id': stopId } : '',
       timetable: timetable,
       value: '',
       results: []
@@ -45,10 +45,31 @@ var StopForm = function (_React$Component) {
     return _this;
   }
 
-  _createClass(StopForm, [{
+  _createClass(TimeTable, [{
+    key: 'queryStop',
+    value: function queryStop(stopId) {
+      var _this2 = this;
+
+      if (stopId) {
+        (0, _nodeFetch2.default)(apiUrl, {
+          method: 'POST',
+          body: JSON.stringify({ "query": "{stop(id: \"" + stopId + "\") {name}}" }),
+          headers: { 'Content-Type': 'application/json' }
+        }).then(function (res) {
+          return res.json();
+        }).then(function (json) {
+          return _this2.setState({
+            stop: { 'id': stopId, 'name': json.data.stop ? json.data.stop.name : 'Pysäkki' }
+          });
+        }).catch(function (err) {
+          return console.log(err);
+        });
+      }
+    }
+  }, {
     key: 'queryStops',
     value: function queryStops(name) {
-      var _this2 = this;
+      var _this3 = this;
 
       (0, _nodeFetch2.default)(apiUrl, {
         method: 'POST',
@@ -57,7 +78,9 @@ var StopForm = function (_React$Component) {
       }).then(function (res) {
         return res.json();
       }).then(function (json) {
-        return _this2.setState({ results: json.data.stops });
+        return _this3.setState({ results: json.data.stops });
+      }).catch(function (err) {
+        return console.log(err);
       });
     }
   }, {
@@ -69,14 +92,6 @@ var StopForm = function (_React$Component) {
       });
       var stopId = stopParam ? stopParam.split('=')[1] : '';
       return stopId;
-    }
-  }, {
-    key: 'getStopDetails',
-    value: function getStopDetails(stopId) {
-      // TODO: get actual stop details (=name)
-      var stop = stopId ? { 'id': stopId, 'name': 'Pysäkki' } : '';
-
-      return stop;
     }
   }, {
     key: 'getStopTimetable',
@@ -203,7 +218,7 @@ var StopForm = function (_React$Component) {
   }, {
     key: 'render',
     value: function render() {
-      var _this3 = this;
+      var _this4 = this;
 
       var content = void 0;
       var stop = this.state.stop;
@@ -217,7 +232,7 @@ var StopForm = function (_React$Component) {
             React.createElement(
               'h4',
               { className: 'list-group-item-heading' },
-              (stop.name || 'Pysäkki') + ' '
+              (stop.name || '') + ' '
             ),
             React.createElement(
               'span',
@@ -236,7 +251,7 @@ var StopForm = function (_React$Component) {
             { onSubmit: this.handleSubmit },
             React.createElement('label', { htmlFor: 'inputStop', 'aria-label': 'Pys\xE4kkihaku' }),
             React.createElement('input', { ref: function ref(input) {
-                _this3.nameInput = input;
+                _this4.nameInput = input;
               }, id: 'inputStop', className: 'form-control', type: 'text', value: this.state.value, onChange: this.handleChange, autoComplete: 'off', placeholder: 'Sy\xF6t\xE4 pys\xE4kin nimi tai tunnus' })
           ),
           this.searchResults()
@@ -246,7 +261,7 @@ var StopForm = function (_React$Component) {
     }
   }]);
 
-  return StopForm;
+  return TimeTable;
 }(React.Component);
 
-ReactDOM.render(React.createElement(StopForm, null), document.getElementById('container'));
+ReactDOM.render(React.createElement(TimeTable, null), document.getElementById('container'));
