@@ -1,0 +1,46 @@
+$bgColor: #efefef;
+$color: #333;
+$lightColor: #565656;
+
+html {
+  height: 100%;
+}
+
+body {
+  min-height: 100%;
+  background-color: $bgColor;
+  color: $color;
+  font-size: 16px;
+}
+
+.timetable {
+  .stop-details {
+    padding: 1em 1em 0.25em;
+
+    h4 {
+      display: inline;
+    }
+
+    span {
+      color: $lightColor;
+    }
+  }
+
+  table.table.table-striped {
+    border-bottom: 2px solid #ddd;
+
+    .line {
+      font-weight: bold;
+    }
+
+    th, td {
+      &:first-child {
+        padding-left: 1em;
+      }
+
+      &:last-child {
+        padding-right: 1em;
+      }
+    }
+  }
+}
