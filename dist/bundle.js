@@ -207,7 +207,7 @@ var TimeTable = function (_React$Component2) {
       var dt = new Date();
       var nowSecs = dt.getSeconds() + 60 * dt.getMinutes() + 60 * 60 * dt.getHours();
       var diff = Math.floor((secs - nowSecs) / 60);
-      return diff + ' min';
+      return diff;
     }
   }, {
     key: 'processTimeTable',
@@ -229,9 +229,10 @@ var TimeTable = function (_React$Component2) {
     key: 'timeTable',
     value: function timeTable() {
       var rows = this.state.timetable.map(function (row) {
+        var gone = row.min < 0;
         return React.createElement(
           'tr',
-          { key: row.line + '-' + row.time },
+          { key: row.line + '-' + row.time, className: gone ? 'gone' : '' },
           React.createElement(
             'td',
             { className: 'time' },
@@ -240,7 +241,7 @@ var TimeTable = function (_React$Component2) {
           React.createElement(
             'td',
             { className: 'min' },
-            row.min
+            gone ? '-' : row.min + ' min'
           ),
           React.createElement(
             'td',

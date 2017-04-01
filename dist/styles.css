@@ -24,5 +24,7 @@ body {
     padding-left: 1em; }
   .timetable table.table.table-striped th:last-child, .timetable table.table.table-striped td:last-child {
     padding-right: 1em; }
+  .timetable table.table.table-striped tr.gone {
+    color: #bbb; }
 
 /*# sourceMappingURL=styles.css.map */

@@ -49,5 +49,9 @@ body {
         padding-right: 1em;
       }
     }
+
+    tr.gone {
+      color: $extraLight;
+    }
   }
 }

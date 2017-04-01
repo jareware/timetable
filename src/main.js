@@ -127,7 +127,7 @@ class TimeTable extends React.Component {
     let dt = new Date();
     let nowSecs = dt.getSeconds() + (60 * dt.getMinutes()) + (60 * 60 * dt.getHours());
     let diff = Math.floor((secs - nowSecs)/60);
-    return diff + ' min';
+    return diff;
   }
 
   processTimeTable(data) {
@@ -144,14 +144,15 @@ class TimeTable extends React.Component {
   }
 
   timeTable() {
-    let rows = this.state.timetable.map((row) =>
-      <tr key={ row.line + '-' + row.time }>
+    let rows = this.state.timetable.map((row) => {
+      let gone = row.min < 0;
+      return <tr key={ row.line + '-' + row.time } className={ gone ? 'gone' : '' }>
         <td className="time">{ row.time }</td>
-        <td className="min">{ row.min }</td>
+        <td className="min">{ gone ? '-' : row.min+' min'}</td>
         <td className="line">{ row.line }</td>
         <td className="dest">{ row.dest || '' }</td>
       </tr>
-    );
+    });
 
     return (
       <table className="table table-striped">
