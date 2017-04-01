@@ -2,11 +2,23 @@
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+var _lodash = require('lodash');
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
+var _nodeFetch = require('node-fetch');
+
+var _nodeFetch2 = _interopRequireDefault(_nodeFetch);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var apiUrl = "https://api.digitransit.fi/routing/v1/routers/hsl/index/graphql";
 
 var StopForm = function (_React$Component) {
   _inherits(StopForm, _React$Component);
@@ -29,10 +41,26 @@ var StopForm = function (_React$Component) {
 
     _this.handleChange = _this.handleChange.bind(_this);
     _this.handleSubmit = _this.handleSubmit.bind(_this);
+    _this.queryStops = _lodash2.default.debounce(_this.queryStops, 500);
     return _this;
   }
 
   _createClass(StopForm, [{
+    key: 'queryStops',
+    value: function queryStops(name) {
+      var _this2 = this;
+
+      (0, _nodeFetch2.default)(apiUrl, {
+        method: 'POST',
+        body: JSON.stringify({ "query": "{stops(name: \"" + name + "\") {name gtfsId}}" }),
+        headers: { 'Content-Type': 'application/json' }
+      }).then(function (res) {
+        return res.json();
+      }).then(function (json) {
+        return _this2.setState({ results: json.data.stops });
+      });
+    }
+  }, {
     key: 'getStopQueryParam',
     value: function getStopQueryParam() {
       var params = window.location.search.substr(1);
@@ -47,6 +75,7 @@ var StopForm = function (_React$Component) {
     value: function getStopDetails(stopId) {
       // TODO: get actual stop details (=name)
       var stop = stopId ? { 'id': stopId, 'name': 'Pysäkki' } : '';
+
       return stop;
     }
   }, {
@@ -61,8 +90,8 @@ var StopForm = function (_React$Component) {
     value: function handleChange(event) {
       // TODO: get actual results
       var newVal = event.target.value;
-      var results = newVal ? [{ 'id': newVal }] : [];
-      this.setState({ value: event.target.value, results: results });
+      this.setState({ value: event.target.value });
+      this.queryStops(newVal);
     }
   }, {
     key: 'handleSubmit',
@@ -75,7 +104,7 @@ var StopForm = function (_React$Component) {
       var resultsList = this.state.results.map(function (res) {
         return React.createElement(
           'a',
-          { key: res.id, href: '?stop=' + res.id, className: 'list-group-item' },
+          { key: res.gtfsId, href: '?stop=' + res.gtfsId, className: 'list-group-item' },
           React.createElement(
             'h4',
             { className: 'list-group-item-heading' },
@@ -84,25 +113,29 @@ var StopForm = function (_React$Component) {
           React.createElement(
             'p',
             { className: 'list-group-item-text' },
-            res.id || 'numero'
+            res.gtfsId || 'numero'
           )
         );
       });
 
       var content = void 0;
-      if (resultsList.length) {
+      if (this.state.value) {
         content = React.createElement(
           'div',
           { className: 'stop-search-results' },
           React.createElement(
             'h3',
             null,
-            'Tulokset'
+            'Valitse pys\xE4kki'
           ),
           React.createElement(
             'div',
             { className: 'list-group' },
-            resultsList
+            resultsList.length ? resultsList : React.createElement(
+              'div',
+              null,
+              'Ei tuloksia'
+            )
           )
         );
       }
@@ -170,7 +203,7 @@ var StopForm = function (_React$Component) {
   }, {
     key: 'render',
     value: function render() {
-      var _this2 = this;
+      var _this3 = this;
 
       var content = void 0;
       var stop = this.state.stop;
@@ -199,21 +232,12 @@ var StopForm = function (_React$Component) {
           'div',
           { className: 'container' },
           React.createElement(
-            'h2',
-            { className: 'title' },
-            'Aikataulut'
-          ),
-          React.createElement(
             'form',
             { onSubmit: this.handleSubmit },
-            React.createElement(
-              'label',
-              { htmlFor: 'inputStop' },
-              'Pys\xE4kin numero'
-            ),
+            React.createElement('label', { htmlFor: 'inputStop', 'aria-label': 'Pys\xE4kkihaku' }),
             React.createElement('input', { ref: function ref(input) {
-                _this2.nameInput = input;
-              }, id: 'inputStop', className: 'form-control', type: 'text', value: this.state.value, onChange: this.handleChange, autoComplete: 'off' })
+                _this3.nameInput = input;
+              }, id: 'inputStop', className: 'form-control', type: 'text', value: this.state.value, onChange: this.handleChange, autoComplete: 'off', placeholder: 'Sy\xF6t\xE4 pys\xE4kin nimi tai tunnus' })
           ),
           this.searchResults()
         );

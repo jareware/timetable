@@ -1,3 +1,8 @@
+import _ from 'lodash';
+import fetch from 'node-fetch';
+
+let apiUrl = "https://api.digitransit.fi/routing/v1/routers/hsl/index/graphql";
+
 class StopForm extends React.Component {
   constructor(props) {
     super(props);
@@ -15,6 +20,17 @@ class StopForm extends React.Component {
 
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.queryStops = _.debounce(this.queryStops, 500);
+  }
+
+  queryStops(name) {
+    fetch(apiUrl, {
+      method: 'POST',
+      body: JSON.stringify({"query": "{stops(name: \"" + name + "\") {name gtfsId}}"}),
+      headers: { 'Content-Type': 'application/json' }
+    })
+      .then(res => res.json())
+      .then(json => this.setState({results: json.data.stops}));
   }
 
   getStopQueryParam() {
@@ -29,6 +45,7 @@ class StopForm extends React.Component {
   getStopDetails(stopId) {
     // TODO: get actual stop details (=name)
     let stop = stopId ? {'id': stopId, 'name': 'Pysäkki'} : '';
+
     return stop;
   }
 
@@ -41,8 +58,8 @@ class StopForm extends React.Component {
   handleChange(event) {
     // TODO: get actual results
     let newVal = event.target.value;
-    let results = newVal ? [{'id': newVal}] : [];
-    this.setState({value: event.target.value, results: results});
+    this.setState({value: event.target.value});
+    this.queryStops(newVal);
   }
 
   handleSubmit(event) {
@@ -51,19 +68,19 @@ class StopForm extends React.Component {
 
   searchResults() {
     let resultsList = this.state.results.map((res) =>
-      <a key={ res.id } href={ '?stop=' + res.id } className="list-group-item">
+      <a key={ res.gtfsId } href={ '?stop=' + res.gtfsId } className="list-group-item">
         <h4 className="list-group-item-heading">{ res.name || 'Pysäkki' }</h4>
-        <p className="list-group-item-text">{ res.id || 'numero' }</p>
+        <p className="list-group-item-text">{ res.gtfsId || 'numero' }</p>
       </a>
     );
 
     let content;
-    if (resultsList.length) {
+    if (this.state.value) {
       content = (
         <div className="stop-search-results">
-          <h3>Tulokset</h3>
+          <h3>Valitse pysäkki</h3>
           <div className="list-group">
-            { resultsList }
+            { resultsList.length ? resultsList : <div>Ei tuloksia</div>}
           </div>
         </div>
       );
@@ -113,10 +130,9 @@ class StopForm extends React.Component {
     } else {
       content = (
         <div className="container">
-          <h2 className="title">Aikataulut</h2>
           <form onSubmit={this.handleSubmit}>
-            <label htmlFor="inputStop">Pysäkin numero</label>
-            <input ref={(input) => { this.nameInput = input; }} id="inputStop" className="form-control" type="text" value={this.state.value} onChange={this.handleChange} autoComplete="off"/>
+            <label htmlFor="inputStop" aria-label="Pysäkkihaku"></label>
+            <input ref={(input) => { this.nameInput = input; }} id="inputStop" className="form-control" type="text" value={this.state.value} onChange={this.handleChange} autoComplete="off" placeholder="Syötä pysäkin nimi tai tunnus"/>
           </form>
           { this.searchResults() }
         </div>
