@@ -1,0 +1,34 @@
+{"query":"query StopPage($id_0:String!,$startTime_1:Long!) {stop(id:$id_0) {id,...F1}} fragment F0 on Stoptime {realtimeDeparture,scheduledDeparture,realtime,stopHeadsign,trip {pattern {route {shortName}}}} fragment F1 on Stop {url,_stoptimesWithoutPatterns3xYh4D:stoptimesWithoutPatterns(startTime:$startTime_1,timeRange:3600,numberOfDepartures:10) {...F0},id,code,name}","variables":{"id_0":"HSL:2212240","startTime_1":1491065068}}
+
+
+
+{"query":"query StopPage($id_0:String!,$startTime_1:Long!) {stop(id:$id_0) {id,...F1}} fragment F0 on Stoptime {realtimeState,realtimeDeparture,scheduledDeparture,realtimeArrival,scheduledArrival,realtime,serviceDay,pickupType,stopHeadsign,stop {code,platformCode,id},trip {gtfsId,pattern {alerts {effectiveStartDate,effectiveEndDate,trip {gtfsId,id},id},route {gtfsId,shortName,longName,mode,color,agency {name,id},id},code,id},id}} fragment F1 on Stop {_stoptimesWithoutPatterns1PxBrV:stoptimesWithoutPatterns(startTime:$startTime_1,timeRange:43200,numberOfDepartures:100) {...F0},id}","variables":{"id_0":"HSL:2212240","startTime_1":1491070735}}
+
+
+{
+	"query":
+		"query StopPage($id_0:String!,$startTime_1:Long!) {
+			stop(id:$id_0) {id,...F1}
+		} fragment F0 on Stoptime {
+			realtimeState,realtimeDeparture,scheduledDeparture,realtimeArrival,scheduledArrival,realtime,serviceDay,pickupType,stopHeadsign,stop {
+				code,platformCode,id
+			},trip {
+				gtfsId,pattern {
+					alerts {
+						effectiveStartDate,effectiveEndDate,trip {
+							gtfsId,id
+						},id
+					},route {
+						gtfsId,shortName,longName,mode
+					},code,id
+				},id
+			}
+		} fragment F1 on Stop {
+			url,_stoptimesWithoutPatterns3xYh4D:stoptimesWithoutPatterns(
+				startTime:$startTime_1,timeRange:43200,numberOfDepartures:100
+			) {...F0},id
+	}",
+	"variables":{
+		"id_0":"HSL:2212240","startTime_1":1491065068
+	}
+}

@@ -164,9 +164,14 @@ var TimeTable = function (_React$Component2) {
       var _this4 = this;
 
       if (stopId) {
+        // Get from one minute ago to the future
+        var now = Math.floor(Date.now() / 1000) - 60;
+        var timeRange = 3600;
+        var limit = 10;
         (0, _nodeFetch2.default)(apiUrl, {
           method: 'POST',
-          body: JSON.stringify({ "query": "{stop(id: \"" + stopId + "\") {name code}}" }),
+          body: JSON.stringify({ "query": "query StopPage($id_0:String!,$startTime_1:Long!) {stop(id:$id_0) {id,...F1}} fragment F0 on Stoptime {scheduledDeparture,stopHeadsign,trip {pattern {route {shortName}}}} fragment F1 on Stop {_stoptimesWithoutPatterns3xYh4D:stoptimesWithoutPatterns(startTime:$startTime_1,timeRange:" + timeRange + ",numberOfDepartures:" + limit + ") {...F0},code,name}",
+            "variables": { "id_0": stopId, "startTime_1": now } }),
           headers: { 'Content-Type': 'application/json' }
         }).then(function (res) {
           return res.json();
@@ -174,13 +179,51 @@ var TimeTable = function (_React$Component2) {
           var result = json.data.stop;
           if (result) {
             _this4.setState({
-              stop: { 'id': stopId, 'code': result.code, 'name': result.name }
+              stop: { 'id': stopId, 'code': result.code, 'name': result.name },
+              timetable: _this4.processTimeTable(result._stoptimesWithoutPatterns3xYh4D)
             });
           }
         }).catch(function (err) {
           return console.log(err);
         });
       }
+    }
+  }, {
+    key: 'parseTime',
+    value: function parseTime(secs) {
+      var hours = Math.floor(secs / (60 * 60));
+      var minutes = Math.floor((secs - hours * 60 * 60) / 60);
+      if (hours < 10) {
+        hours = '0' + hours;
+      }
+      if (minutes < 10) {
+        minutes = '0' + minutes;
+      }
+      return hours + ':' + minutes;
+    }
+  }, {
+    key: 'timeDiff',
+    value: function timeDiff(secs) {
+      var dt = new Date();
+      var nowSecs = dt.getSeconds() + 60 * dt.getMinutes() + 60 * 60 * dt.getHours();
+      var diff = Math.floor((secs - nowSecs) / 60);
+      return diff + ' min';
+    }
+  }, {
+    key: 'processTimeTable',
+    value: function processTimeTable(data) {
+      var _this5 = this;
+
+      return data.map(function (item) {
+        var time = _this5.parseTime(item.scheduledDeparture);
+        var min = _this5.timeDiff(item.scheduledDeparture);
+        return {
+          'time': time,
+          'min': min,
+          'line': item.trip.pattern.route.shortName,
+          'dest': item.stopHeadsign
+        };
+      });
     }
   }, {
     key: 'timeTable',
@@ -193,6 +236,11 @@ var TimeTable = function (_React$Component2) {
             'td',
             { className: 'time' },
             row.time
+          ),
+          React.createElement(
+            'td',
+            { className: 'min' },
+            row.min
           ),
           React.createElement(
             'td',
@@ -220,6 +268,11 @@ var TimeTable = function (_React$Component2) {
               'th',
               null,
               'Aika'
+            ),
+            React.createElement(
+              'th',
+              null,
+              'Min'
             ),
             React.createElement(
               'th',
@@ -287,14 +340,14 @@ var App = function (_React$Component3) {
   function App(props) {
     _classCallCheck(this, App);
 
-    var _this5 = _possibleConstructorReturn(this, (App.__proto__ || Object.getPrototypeOf(App)).call(this, props));
+    var _this6 = _possibleConstructorReturn(this, (App.__proto__ || Object.getPrototypeOf(App)).call(this, props));
 
-    var stopId = _this5.getStopQueryParam();
+    var stopId = _this6.getStopQueryParam();
 
-    _this5.state = {
+    _this6.state = {
       stopId: stopId ? stopId : ''
     };
-    return _this5;
+    return _this6;
   }
 
   _createClass(App, [{

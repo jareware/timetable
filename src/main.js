@@ -92,16 +92,22 @@ class TimeTable extends React.Component {
 
   queryStop(stopId) {
     if (stopId) {
+      // Get from one minute ago to the future
+      let now = Math.floor(Date.now() / 1000) - 60;
+      let timeRange = 3600;
+      let limit = 10;
       fetch(apiUrl, {
         method: 'POST',
-        body: JSON.stringify({"query": "{stop(id: \"" + stopId + "\") {name code}}"}),
+        body: JSON.stringify({"query":"query StopPage($id_0:String!,$startTime_1:Long!) {stop(id:$id_0) {id,...F1}} fragment F0 on Stoptime {scheduledDeparture,stopHeadsign,trip {pattern {route {shortName}}}} fragment F1 on Stop {_stoptimesWithoutPatterns3xYh4D:stoptimesWithoutPatterns(startTime:$startTime_1,timeRange:"+timeRange+",numberOfDepartures:"+limit+") {...F0},code,name}",
+          "variables":{"id_0":stopId,"startTime_1":now}}),
         headers: { 'Content-Type': 'application/json' }
       }).then(res => res.json())
         .then(json => {
           let result = json.data.stop;
           if (result) {
             this.setState({
-              stop: {'id': stopId, 'code': result.code, 'name': result.name}
+              stop: {'id': stopId, 'code': result.code, 'name': result.name},
+              timetable: this.processTimeTable(result._stoptimesWithoutPatterns3xYh4D)
             })
           }
         })
@@ -109,10 +115,39 @@ class TimeTable extends React.Component {
     }
   }
 
+  parseTime(secs) {
+    var hours = Math.floor(secs/(60*60));
+    var minutes = Math.floor((secs - hours*60*60)/60);
+    if (hours < 10) { hours = '0'+hours }
+    if (minutes < 10) {minutes = '0'+minutes }
+    return hours + ':' + minutes;
+  }
+
+  timeDiff(secs) {
+    let dt = new Date();
+    let nowSecs = dt.getSeconds() + (60 * dt.getMinutes()) + (60 * 60 * dt.getHours());
+    let diff = Math.floor((secs - nowSecs)/60);
+    return diff + ' min';
+  }
+
+  processTimeTable(data) {
+    return data.map((item) => {
+      let time = this.parseTime(item.scheduledDeparture);
+      let min = this.timeDiff(item.scheduledDeparture);
+      return {
+        'time': time,
+        'min': min,
+        'line': item.trip.pattern.route.shortName,
+        'dest': item.stopHeadsign
+      }
+    });
+  }
+
   timeTable() {
     let rows = this.state.timetable.map((row) =>
       <tr key={ row.line + '-' + row.time }>
         <td className="time">{ row.time }</td>
+        <td className="min">{ row.min }</td>
         <td className="line">{ row.line }</td>
         <td className="dest">{ row.dest || '' }</td>
       </tr>
@@ -123,6 +158,7 @@ class TimeTable extends React.Component {
         <thead>
           <tr>
             <th>Aika</th>
+            <th>Min</th>
             <th>Linja</th>
             <th>Määränpää</th>
           </tr>
