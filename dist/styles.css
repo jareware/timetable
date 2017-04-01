@@ -7,6 +7,9 @@ body {
   color: #333;
   font-size: 16px; }
 
+.stop-search-results .small {
+  color: #bbb; }
+
 .timetable .stop-details {
   padding: 1em 1em 0.25em; }
   .timetable .stop-details h4 {

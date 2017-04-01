@@ -3,17 +3,11 @@ import fetch from 'node-fetch';
 
 let apiUrl = "https://api.digitransit.fi/routing/v1/routers/hsl/index/graphql";
 
-class TimeTable extends React.Component {
+class StopSearch extends React.Component {
   constructor(props) {
     super(props);
 
-    let stopId = this.getStopQueryParam();
-    this.queryStop(stopId);
-    let timetable = this.getStopTimetable(stopId);
-
     this.state = {
-      stop: stopId ? {'id': stopId} : '',
-      timetable: timetable,
       value: '',
       results: []
     };
@@ -23,47 +17,7 @@ class TimeTable extends React.Component {
     this.queryStops = _.debounce(this.queryStops, 500);
   }
 
-  queryStop(stopId) {
-    if (stopId) {
-      fetch(apiUrl, {
-        method: 'POST',
-        body: JSON.stringify({"query": "{stop(id: \"" + stopId + "\") {name}}"}),
-        headers: { 'Content-Type': 'application/json' }
-      }).then(res => res.json())
-        .then(json => this.setState({
-          stop: {'id': stopId, 'name': json.data.stop ? json.data.stop.name : 'Pysäkki'}
-        }))
-        .catch(err => console.log(err));
-    }
-  }
-
-  queryStops(name) {
-    fetch(apiUrl, {
-      method: 'POST',
-      body: JSON.stringify({"query": "{stops(name: \"" + name + "\") {name gtfsId}}"}),
-      headers: { 'Content-Type': 'application/json' }
-    }).then(res => res.json())
-      .then(json => this.setState({results: json.data.stops}))
-      .catch(err => console.log(err));
-  }
-
-  getStopQueryParam() {
-    let params = window.location.search.substr(1);
-    let stopParam = params.split('&').find(function(item) {
-      return item.split('=')[0] === 'stop' ? true : false;
-    });
-    let stopId = stopParam ? stopParam.split('=')[1] : '';
-    return stopId;
-  }
-
-  getStopTimetable(stopId) {
-    // TODO: get actual timetable
-    let timetable = stopId ? [{'time': '07:14', 'line': '109', 'dest': 'Kamppi'},{'time': '07:15', 'line': '109', 'dest': 'Kamppi'},{'time': '07:16', 'line': '109', 'dest': 'Kamppi'}] : [];
-    return timetable;
-  }
-
   handleChange(event) {
-    // TODO: get actual results
     let newVal = event.target.value;
     this.setState({value: event.target.value});
     this.queryStops(newVal);
@@ -73,11 +27,21 @@ class TimeTable extends React.Component {
     event.preventDefault();
   }
 
+  queryStops(name) {
+    fetch(apiUrl, {
+      method: 'POST',
+      body: JSON.stringify({"query": "{stops(name: \"" + name + "\") {name gtfsId code}}"}),
+      headers: { 'Content-Type': 'application/json' }
+    }).then(res => res.json())
+      .then(json => this.setState({results: json.data.stops}))
+      .catch(err => console.log(err));
+  }
+
   searchResults() {
-    let resultsList = this.state.results.map((res) =>
+    let resultsList = this.state.results.filter((res) => res.gtfsId).map((res) =>
       <a key={ res.gtfsId } href={ '?stop=' + res.gtfsId } className="list-group-item">
         <h4 className="list-group-item-heading">{ res.name || 'Pysäkki' }</h4>
-        <p className="list-group-item-text">{ res.gtfsId || 'numero' }</p>
+        <p className="list-group-item-text">{ (res.code + ' ') || '' }<span className="small">{ res.gtfsId }</span></p>
       </a>
     );
 
@@ -87,13 +51,62 @@ class TimeTable extends React.Component {
         <div className="stop-search-results">
           <h3>Valitse pysäkki</h3>
           <div className="list-group">
-            { resultsList.length ? resultsList : <div>Ei tuloksia</div>}
+            { resultsList.length ? resultsList : <div></div>}
           </div>
         </div>
       );
     }
 
     return content;
+  }
+
+  render() {
+    return (
+      <div className="container">
+        <form onSubmit={this.handleSubmit}>
+          <label htmlFor="inputStop" aria-label="Pysäkkihaku"></label>
+          <input id="inputStop" className="form-control" type="text"
+            value={this.state.value} onChange={this.handleChange}
+            autoComplete="off" placeholder="Syötä pysäkin nimi tai tunnus"/>
+        </form>
+        { this.searchResults() }
+      </div>
+    );
+  }
+}
+
+class TimeTable extends React.Component {
+  constructor(props) {
+    super(props);
+
+    let stopId = props.stopId;
+    this.queryStop(stopId);
+
+    this.state = {
+      stop: stopId ? {'id': stopId} : '',
+      timetable: [],
+    };
+
+    this.queryStop = _.debounce(this.queryStop, 500);
+  }
+
+  queryStop(stopId) {
+    if (stopId) {
+      fetch(apiUrl, {
+        method: 'POST',
+        body: JSON.stringify({"query": "{stop(id: \"" + stopId + "\") {name code}}"}),
+        headers: { 'Content-Type': 'application/json' }
+      }).then(res => res.json())
+        .then(json => {
+          let result = json.data.stop;
+          if (result) {
+            this.setState({
+              stop: {'id': stopId, 'code': result.code, 'name': result.name}
+            })
+          }
+        })
+        .catch(err => console.log(err));
+    }
   }
 
   timeTable() {
@@ -124,24 +137,17 @@ class TimeTable extends React.Component {
   render() {
     let content;
     let stop = this.state.stop;
-    if (stop) {
+    let timetable = this.state.timetable;
+    if (!stop.name) { // TODO: change into !timetable
+      content = (<div className="loading">Ladataan...</div>);
+    } else {
       content = (
         <div className="timetable">
           <div className="stop-details">
             <h4 className="list-group-item-heading">{ (stop.name || '') + ' '}</h4>
-            <span className="list-group-item-text">{ stop.id || 'numero' }</span>
+            <span className="list-group-item-text">{ stop.code || stop.gtfsId }</span>
           </div>
           { this.timeTable() }
-        </div>
-      );
-    } else {
-      content = (
-        <div className="container">
-          <form onSubmit={this.handleSubmit}>
-            <label htmlFor="inputStop" aria-label="Pysäkkihaku"></label>
-            <input ref={(input) => { this.nameInput = input; }} id="inputStop" className="form-control" type="text" value={this.state.value} onChange={this.handleChange} autoComplete="off" placeholder="Syötä pysäkin nimi tai tunnus"/>
-          </form>
-          { this.searchResults() }
         </div>
       );
     }
@@ -149,7 +155,37 @@ class TimeTable extends React.Component {
   }
 }
 
+class App extends React.Component {
+  constructor(props) {
+    super(props);
+
+    let stopId = this.getStopQueryParam();
+
+    this.state = {
+      stopId: stopId ? stopId : ''
+    };
+  }
+
+  getStopQueryParam() {
+    let params = window.location.search.substr(1);
+    let stopParam = params.split('&').find(function(item) {
+      return item.split('=')[0] === 'stop' ? true : false;
+    });
+    let stopId = stopParam ? stopParam.split('=')[1] : '';
+    return stopId;
+  }
+
+  render() {
+    let stopId = this.state.stopId;
+    if (stopId) {
+      return <TimeTable stopId={ stopId }/>;
+    } else {
+      return <StopSearch />;
+    }
+  }
+}
+
 ReactDOM.render(
-  <TimeTable />,
+  <App />,
   document.getElementById('container')
 );

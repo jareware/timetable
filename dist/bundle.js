@@ -21,21 +21,15 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var apiUrl = "https://api.digitransit.fi/routing/v1/routers/hsl/index/graphql";
 
-var TimeTable = function (_React$Component) {
-  _inherits(TimeTable, _React$Component);
+var StopSearch = function (_React$Component) {
+  _inherits(StopSearch, _React$Component);
 
-  function TimeTable(props) {
-    _classCallCheck(this, TimeTable);
+  function StopSearch(props) {
+    _classCallCheck(this, StopSearch);
 
-    var _this = _possibleConstructorReturn(this, (TimeTable.__proto__ || Object.getPrototypeOf(TimeTable)).call(this, props));
-
-    var stopId = _this.getStopQueryParam();
-    _this.queryStop(stopId);
-    var timetable = _this.getStopTimetable(stopId);
+    var _this = _possibleConstructorReturn(this, (StopSearch.__proto__ || Object.getPrototypeOf(StopSearch)).call(this, props));
 
     _this.state = {
-      stop: stopId ? { 'id': stopId } : '',
-      timetable: timetable,
       value: '',
       results: []
     };
@@ -46,65 +40,9 @@ var TimeTable = function (_React$Component) {
     return _this;
   }
 
-  _createClass(TimeTable, [{
-    key: 'queryStop',
-    value: function queryStop(stopId) {
-      var _this2 = this;
-
-      if (stopId) {
-        (0, _nodeFetch2.default)(apiUrl, {
-          method: 'POST',
-          body: JSON.stringify({ "query": "{stop(id: \"" + stopId + "\") {name}}" }),
-          headers: { 'Content-Type': 'application/json' }
-        }).then(function (res) {
-          return res.json();
-        }).then(function (json) {
-          return _this2.setState({
-            stop: { 'id': stopId, 'name': json.data.stop ? json.data.stop.name : 'Pysäkki' }
-          });
-        }).catch(function (err) {
-          return console.log(err);
-        });
-      }
-    }
-  }, {
-    key: 'queryStops',
-    value: function queryStops(name) {
-      var _this3 = this;
-
-      (0, _nodeFetch2.default)(apiUrl, {
-        method: 'POST',
-        body: JSON.stringify({ "query": "{stops(name: \"" + name + "\") {name gtfsId}}" }),
-        headers: { 'Content-Type': 'application/json' }
-      }).then(function (res) {
-        return res.json();
-      }).then(function (json) {
-        return _this3.setState({ results: json.data.stops });
-      }).catch(function (err) {
-        return console.log(err);
-      });
-    }
-  }, {
-    key: 'getStopQueryParam',
-    value: function getStopQueryParam() {
-      var params = window.location.search.substr(1);
-      var stopParam = params.split('&').find(function (item) {
-        return item.split('=')[0] === 'stop' ? true : false;
-      });
-      var stopId = stopParam ? stopParam.split('=')[1] : '';
-      return stopId;
-    }
-  }, {
-    key: 'getStopTimetable',
-    value: function getStopTimetable(stopId) {
-      // TODO: get actual timetable
-      var timetable = stopId ? [{ 'time': '07:14', 'line': '109', 'dest': 'Kamppi' }, { 'time': '07:15', 'line': '109', 'dest': 'Kamppi' }, { 'time': '07:16', 'line': '109', 'dest': 'Kamppi' }] : [];
-      return timetable;
-    }
-  }, {
+  _createClass(StopSearch, [{
     key: 'handleChange',
     value: function handleChange(event) {
-      // TODO: get actual results
       var newVal = event.target.value;
       this.setState({ value: event.target.value });
       this.queryStops(newVal);
@@ -115,9 +53,28 @@ var TimeTable = function (_React$Component) {
       event.preventDefault();
     }
   }, {
+    key: 'queryStops',
+    value: function queryStops(name) {
+      var _this2 = this;
+
+      (0, _nodeFetch2.default)(apiUrl, {
+        method: 'POST',
+        body: JSON.stringify({ "query": "{stops(name: \"" + name + "\") {name gtfsId code}}" }),
+        headers: { 'Content-Type': 'application/json' }
+      }).then(function (res) {
+        return res.json();
+      }).then(function (json) {
+        return _this2.setState({ results: json.data.stops });
+      }).catch(function (err) {
+        return console.log(err);
+      });
+    }
+  }, {
     key: 'searchResults',
     value: function searchResults() {
-      var resultsList = this.state.results.map(function (res) {
+      var resultsList = this.state.results.filter(function (res) {
+        return res.gtfsId;
+      }).map(function (res) {
         return React.createElement(
           'a',
           { key: res.gtfsId, href: '?stop=' + res.gtfsId, className: 'list-group-item' },
@@ -129,7 +86,12 @@ var TimeTable = function (_React$Component) {
           React.createElement(
             'p',
             { className: 'list-group-item-text' },
-            res.gtfsId || 'numero'
+            res.code + ' ' || '',
+            React.createElement(
+              'span',
+              { className: 'small' },
+              res.gtfsId
+            )
           )
         );
       });
@@ -147,16 +109,78 @@ var TimeTable = function (_React$Component) {
           React.createElement(
             'div',
             { className: 'list-group' },
-            resultsList.length ? resultsList : React.createElement(
-              'div',
-              null,
-              'Ei tuloksia'
-            )
+            resultsList.length ? resultsList : React.createElement('div', null)
           )
         );
       }
 
       return content;
+    }
+  }, {
+    key: 'render',
+    value: function render() {
+      return React.createElement(
+        'div',
+        { className: 'container' },
+        React.createElement(
+          'form',
+          { onSubmit: this.handleSubmit },
+          React.createElement('label', { htmlFor: 'inputStop', 'aria-label': 'Pys\xE4kkihaku' }),
+          React.createElement('input', { id: 'inputStop', className: 'form-control', type: 'text',
+            value: this.state.value, onChange: this.handleChange,
+            autoComplete: 'off', placeholder: 'Sy\xF6t\xE4 pys\xE4kin nimi tai tunnus' })
+        ),
+        this.searchResults()
+      );
+    }
+  }]);
+
+  return StopSearch;
+}(React.Component);
+
+var TimeTable = function (_React$Component2) {
+  _inherits(TimeTable, _React$Component2);
+
+  function TimeTable(props) {
+    _classCallCheck(this, TimeTable);
+
+    var _this3 = _possibleConstructorReturn(this, (TimeTable.__proto__ || Object.getPrototypeOf(TimeTable)).call(this, props));
+
+    var stopId = props.stopId;
+    _this3.queryStop(stopId);
+
+    _this3.state = {
+      stop: stopId ? { 'id': stopId } : '',
+      timetable: []
+    };
+
+    _this3.queryStop = _lodash2.default.debounce(_this3.queryStop, 500);
+    return _this3;
+  }
+
+  _createClass(TimeTable, [{
+    key: 'queryStop',
+    value: function queryStop(stopId) {
+      var _this4 = this;
+
+      if (stopId) {
+        (0, _nodeFetch2.default)(apiUrl, {
+          method: 'POST',
+          body: JSON.stringify({ "query": "{stop(id: \"" + stopId + "\") {name code}}" }),
+          headers: { 'Content-Type': 'application/json' }
+        }).then(function (res) {
+          return res.json();
+        }).then(function (json) {
+          var result = json.data.stop;
+          if (result) {
+            _this4.setState({
+              stop: { 'id': stopId, 'code': result.code, 'name': result.name }
+            });
+          }
+        }).catch(function (err) {
+          return console.log(err);
+        });
+      }
     }
   }, {
     key: 'timeTable',
@@ -219,11 +243,17 @@ var TimeTable = function (_React$Component) {
   }, {
     key: 'render',
     value: function render() {
-      var _this4 = this;
-
       var content = void 0;
       var stop = this.state.stop;
-      if (stop) {
+      var timetable = this.state.timetable;
+      if (!stop.name) {
+        // TODO: change into !timetable
+        content = React.createElement(
+          'div',
+          { className: 'loading' },
+          'Ladataan...'
+        );
+      } else {
         content = React.createElement(
           'div',
           { className: 'timetable' },
@@ -238,24 +268,10 @@ var TimeTable = function (_React$Component) {
             React.createElement(
               'span',
               { className: 'list-group-item-text' },
-              stop.id || 'numero'
+              stop.code || stop.gtfsId
             )
           ),
           this.timeTable()
-        );
-      } else {
-        content = React.createElement(
-          'div',
-          { className: 'container' },
-          React.createElement(
-            'form',
-            { onSubmit: this.handleSubmit },
-            React.createElement('label', { htmlFor: 'inputStop', 'aria-label': 'Pys\xE4kkihaku' }),
-            React.createElement('input', { ref: function ref(input) {
-                _this4.nameInput = input;
-              }, id: 'inputStop', className: 'form-control', type: 'text', value: this.state.value, onChange: this.handleChange, autoComplete: 'off', placeholder: 'Sy\xF6t\xE4 pys\xE4kin nimi tai tunnus' })
-          ),
-          this.searchResults()
         );
       }
       return content;
@@ -265,7 +281,48 @@ var TimeTable = function (_React$Component) {
   return TimeTable;
 }(React.Component);
 
-ReactDOM.render(React.createElement(TimeTable, null), document.getElementById('container'));
+var App = function (_React$Component3) {
+  _inherits(App, _React$Component3);
+
+  function App(props) {
+    _classCallCheck(this, App);
+
+    var _this5 = _possibleConstructorReturn(this, (App.__proto__ || Object.getPrototypeOf(App)).call(this, props));
+
+    var stopId = _this5.getStopQueryParam();
+
+    _this5.state = {
+      stopId: stopId ? stopId : ''
+    };
+    return _this5;
+  }
+
+  _createClass(App, [{
+    key: 'getStopQueryParam',
+    value: function getStopQueryParam() {
+      var params = window.location.search.substr(1);
+      var stopParam = params.split('&').find(function (item) {
+        return item.split('=')[0] === 'stop' ? true : false;
+      });
+      var stopId = stopParam ? stopParam.split('=')[1] : '';
+      return stopId;
+    }
+  }, {
+    key: 'render',
+    value: function render() {
+      var stopId = this.state.stopId;
+      if (stopId) {
+        return React.createElement(TimeTable, { stopId: stopId });
+      } else {
+        return React.createElement(StopSearch, null);
+      }
+    }
+  }]);
+
+  return App;
+}(React.Component);
+
+ReactDOM.render(React.createElement(App, null), document.getElementById('container'));
 },{"lodash":26,"node-fetch":27}],2:[function(require,module,exports){
 (function (Buffer){
 'use strict';
