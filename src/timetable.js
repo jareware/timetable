@@ -104,7 +104,7 @@ class TimeTable extends React.Component {
       let limit = 10;
       fetch(apiUrl, {
         method: 'POST',
-        body: JSON.stringify({"query":"query StopPage($id_0:String!,$startTime_1:Long!) {stop(id:$id_0) {id,...F1}} fragment F0 on Stoptime {scheduledDeparture,stopHeadsign,trip {pattern {route {shortName}}}} fragment F1 on Stop {_stoptimesWithoutPatterns3xYh4D:stoptimesWithoutPatterns(startTime:$startTime_1,timeRange:"+timeRange+",numberOfDepartures:"+limit+") {...F0},code,name}",
+        body: JSON.stringify({"query":"query StopPage($id_0:String!,$startTime_1:Long!) {stop(id:$id_0) {id,...F1}} fragment F0 on Stoptime {scheduledDeparture,realtime,realtimeDeparture,stopHeadsign,trip {pattern {route {shortName}}}} fragment F1 on Stop {_stoptimesWithoutPatterns3xYh4D:stoptimesWithoutPatterns(startTime:$startTime_1,timeRange:"+timeRange+",numberOfDepartures:"+limit+") {...F0},code,name}",
           "variables":{"id_0":stopId,"startTime_1":now}}),
         headers: { 'Content-Type': 'application/json' }
       }).then(res => res.json())
@@ -140,9 +140,15 @@ class TimeTable extends React.Component {
     return data.map((item) => {
       let time = this.parseTime(item.scheduledDeparture);
       let min = this.timeDiff(item.scheduledDeparture);
+      let realTime = this.parseTime(item.realtimeDeparture);
+      let realMin = this.timeDiff(item.realtimeDeparture);
+      console.log('realtime', item.realtime, 'realTime', realTime)
       return {
         'time': time,
         'min': min,
+        'hasRealtime': item.realtime,
+        'realTime': realTime,
+        'realMin': realMin,
         'line': item.trip.pattern.route.shortName,
         'dest': item.stopHeadsign
       }
@@ -151,20 +157,22 @@ class TimeTable extends React.Component {
 
   timeTable() {
     let rows = this.state.timetable.map((row) => {
-      let gone = row.min < 0;
+      let gone = row.hasRealTime ? row.realMin < 0 : row.min < 0;
+      console.log('realtime', row.hasRealtime)
+      let realTime = row.hasRealtime ? <span className="realtime small">{ ' ('+row.realTime+')' }</span> : null;
       return <tr key={ row.line + '-' + row.time } className={ gone ? 'gone' : '' }>
-        <td className="time">{ row.time }</td>
+        <td className="time"><span>{ row.time }</span>{ realTime }</td>
         <td className="min">{ gone ? '-' : row.min+' min'}</td>
         <td className="line">{ row.line }</td>
-        <td className="dest">{ row.dest || '' }</td>
+        <td className="dest small">{ row.dest || '' }</td>
       </tr>
     });
 
     return (
       <table className="table table-striped">
-        <thead>
+        <thead className="small">
           <tr>
-            <th>Aika</th>
+            <th>Lähtee</th>
             <th>Min</th>
             <th>Linja</th>
             <th>Määränpää</th>

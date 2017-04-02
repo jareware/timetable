@@ -21,13 +21,18 @@ body {
   border-bottom: 2px solid #ddd; }
   .timetable table.table.table-striped .line {
     font-weight: bold; }
+  .timetable table.table.table-striped tr.gone,
+  .timetable table.table.table-striped tr.gone .realtime {
+    color: #bbb; }
   .timetable table.table.table-striped th:first-child,
   .timetable table.table.table-striped td:first-child {
     padding-left: 1em; }
   .timetable table.table.table-striped th:last-child,
   .timetable table.table.table-striped td:last-child {
     padding-right: 1em; }
-  .timetable table.table.table-striped tr.gone {
-    color: #bbb; }
+  .timetable table.table.table-striped td.min {
+    white-space: nowrap; }
+  .timetable table.table.table-striped td .realtime {
+    color: #03a9f4; }
 
 /*# sourceMappingURL=styles.css.map */

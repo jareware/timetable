@@ -36972,7 +36972,7 @@ var TimeTable = function (_React$Component2) {
         var limit = 10;
         fetch(apiUrl, {
           method: 'POST',
-          body: JSON.stringify({ "query": "query StopPage($id_0:String!,$startTime_1:Long!) {stop(id:$id_0) {id,...F1}} fragment F0 on Stoptime {scheduledDeparture,stopHeadsign,trip {pattern {route {shortName}}}} fragment F1 on Stop {_stoptimesWithoutPatterns3xYh4D:stoptimesWithoutPatterns(startTime:$startTime_1,timeRange:" + timeRange + ",numberOfDepartures:" + limit + ") {...F0},code,name}",
+          body: JSON.stringify({ "query": "query StopPage($id_0:String!,$startTime_1:Long!) {stop(id:$id_0) {id,...F1}} fragment F0 on Stoptime {scheduledDeparture,realtime,realtimeDeparture,stopHeadsign,trip {pattern {route {shortName}}}} fragment F1 on Stop {_stoptimesWithoutPatterns3xYh4D:stoptimesWithoutPatterns(startTime:$startTime_1,timeRange:" + timeRange + ",numberOfDepartures:" + limit + ") {...F0},code,name}",
             "variables": { "id_0": stopId, "startTime_1": now } }),
           headers: { 'Content-Type': 'application/json' }
         }).then(function (res) {
@@ -37019,9 +37019,15 @@ var TimeTable = function (_React$Component2) {
       return data.map(function (item) {
         var time = _this5.parseTime(item.scheduledDeparture);
         var min = _this5.timeDiff(item.scheduledDeparture);
+        var realTime = _this5.parseTime(item.realtimeDeparture);
+        var realMin = _this5.timeDiff(item.realtimeDeparture);
+        console.log('realtime', item.realtime, 'realTime', realTime);
         return {
           'time': time,
           'min': min,
+          'hasRealtime': item.realtime,
+          'realTime': realTime,
+          'realMin': realMin,
           'line': item.trip.pattern.route.shortName,
           'dest': item.stopHeadsign
         };
@@ -37031,14 +37037,25 @@ var TimeTable = function (_React$Component2) {
     key: 'timeTable',
     value: function timeTable() {
       var rows = this.state.timetable.map(function (row) {
-        var gone = row.min < 0;
+        var gone = row.hasRealTime ? row.realMin < 0 : row.min < 0;
+        console.log('realtime', row.hasRealtime);
+        var realTime = row.hasRealtime ? React.createElement(
+          'span',
+          { className: 'realtime small' },
+          ' (' + row.realTime + ')'
+        ) : null;
         return React.createElement(
           'tr',
           { key: row.line + '-' + row.time, className: gone ? 'gone' : '' },
           React.createElement(
             'td',
             { className: 'time' },
-            row.time
+            React.createElement(
+              'span',
+              null,
+              row.time
+            ),
+            realTime
           ),
           React.createElement(
             'td',
@@ -37052,7 +37069,7 @@ var TimeTable = function (_React$Component2) {
           ),
           React.createElement(
             'td',
-            { className: 'dest' },
+            { className: 'dest small' },
             row.dest || ''
           )
         );
@@ -37063,14 +37080,14 @@ var TimeTable = function (_React$Component2) {
         { className: 'table table-striped' },
         React.createElement(
           'thead',
-          null,
+          { className: 'small' },
           React.createElement(
             'tr',
             null,
             React.createElement(
               'th',
               null,
-              'Aika'
+              'L\xE4htee'
             ),
             React.createElement(
               'th',
