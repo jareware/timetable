@@ -37097,7 +37097,7 @@ var TimeTable = function (_React$Component2) {
             React.createElement(
               'th',
               null,
-              'Linja'
+              React.createElement('i', { className: 'fa fa-bus', 'aria-hidden': 'true' })
             ),
             React.createElement(
               'th',

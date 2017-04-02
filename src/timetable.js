@@ -174,7 +174,7 @@ class TimeTable extends React.Component {
           <tr>
             <th>Lähtee</th>
             <th>Min</th>
-            <th>Linja</th>
+            <th><i className="fa fa-bus" aria-hidden="true"></i></th>
             <th>Määränpää</th>
           </tr>
         </thead>
