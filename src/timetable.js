@@ -173,9 +173,9 @@ class TimeTable extends React.Component {
       <table className="table table-striped">
         <thead className="small">
           <tr>
-            <th>Lähtee</th>
-            <th>Min</th>
-            <th><i className="fa fa-bus" aria-hidden="true"></i></th>
+            <th className="col-xs-2 col-sm-2">Lähtee</th>
+            <th className="col-xs-2 col-sm-2">Min</th>
+            <th className="col-xs-1 col-sm-1"><i className="fa fa-bus" aria-hidden="true"></i></th>
             <th>Määränpää</th>
           </tr>
         </thead>
@@ -194,7 +194,7 @@ class TimeTable extends React.Component {
       content = (<div className="loading">Ladataan pysäkin { stop.id } tietoja...</div>);
     } else {
       content = (
-        <div className="timetable">
+        <div className="timetable col-sm-6">
           <div className="stop-details">
             <h4 className="list-group-item-heading">{ (stop.name || '') + ' '}</h4>
             <span className="list-group-item-text small">{ stop.code || stop.id }</span>

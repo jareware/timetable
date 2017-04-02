@@ -37096,17 +37096,17 @@ var TimeTable = function (_React$Component2) {
             null,
             React.createElement(
               'th',
-              null,
+              { className: 'col-xs-2 col-sm-2' },
               'L\xE4htee'
             ),
             React.createElement(
               'th',
-              null,
+              { className: 'col-xs-2 col-sm-2' },
               'Min'
             ),
             React.createElement(
               'th',
-              null,
+              { className: 'col-xs-1 col-sm-1' },
               React.createElement('i', { className: 'fa fa-bus', 'aria-hidden': 'true' })
             ),
             React.createElement(
@@ -37140,7 +37140,7 @@ var TimeTable = function (_React$Component2) {
       } else {
         content = React.createElement(
           'div',
-          { className: 'timetable' },
+          { className: 'timetable col-sm-6' },
           React.createElement(
             'div',
             { className: 'stop-details' },

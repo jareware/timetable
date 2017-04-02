@@ -17,29 +17,35 @@ body {
   padding-top: 2rem;
   color: #f1003f; }
 
-.timetable .stop-details {
-  padding: 1.2rem 1.2rem 0.5rem; }
-  .timetable .stop-details h4 {
-    display: inline; }
-  .timetable .stop-details span {
-    color: #565656; }
-
-.timetable table.table.table-striped {
-  border-bottom: 2px solid #ddd; }
-  .timetable table.table.table-striped .line {
-    font-weight: bold; }
-  .timetable table.table.table-striped tr.gone,
-  .timetable table.table.table-striped tr.gone .realtime {
-    color: #bbb; }
-  .timetable table.table.table-striped th:first-child,
-  .timetable table.table.table-striped td:first-child {
-    padding-left: 1.2rem; }
-  .timetable table.table.table-striped th:last-child,
-  .timetable table.table.table-striped td:last-child {
-    padding-right: 1.2rem; }
-  .timetable table.table.table-striped td.min {
-    white-space: nowrap; }
-  .timetable table.table.table-striped td .realtime {
-    color: #03a9f4; }
+.timetable {
+  padding: 0 0 0.8rem; }
+  @media (min-width: 768px) {
+    .timetable:nth-of-type(even) {
+      border-left: 2px solid #ddd; } }
+  .timetable .stop-details {
+    padding: 1.2rem 1.2rem 0.5rem; }
+    .timetable .stop-details h4 {
+      display: inline; }
+    .timetable .stop-details span {
+      color: #565656; }
+  .timetable table.table.table-striped {
+    border-bottom: 2px solid #ddd;
+    margin-bottom: 0; }
+    .timetable table.table.table-striped .line {
+      font-weight: bold; }
+    .timetable table.table.table-striped tr.gone,
+    .timetable table.table.table-striped tr.gone .realtime {
+      color: #bbb; }
+    .timetable table.table.table-striped th:first-child,
+    .timetable table.table.table-striped td:first-child {
+      padding-left: 1.2rem; }
+    .timetable table.table.table-striped th:last-child,
+    .timetable table.table.table-striped td:last-child {
+      padding-right: 1.2rem; }
+    .timetable table.table.table-striped td.min {
+      white-space: nowrap; }
+    .timetable table.table.table-striped td .realtime {
+      color: #03a9f4;
+      vertical-align: text-top; }
 
 /*# sourceMappingURL=styles.css.map */
