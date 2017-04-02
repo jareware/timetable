@@ -4,6 +4,7 @@ $light-color: #565656;
 $extra-light: #bbb;
 $border-color: #ddd;
 $realtime-color: #03a9f4;
+$error-color: #f1003f;
 
 html {
   height: 100%;
@@ -20,6 +21,15 @@ body {
   .small {
     color: $extra-light;
   }
+}
+
+.loading {
+  padding: 1.2rem;
+}
+
+.error-message {
+  padding-top: 2rem;
+  color: $error-color;
 }
 
 .timetable {

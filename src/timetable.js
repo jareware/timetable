@@ -12,7 +12,8 @@ class StopSearch extends React.Component {
 
     this.state = {
       value: '',
-      results: []
+      results: [],
+      message: props.message
     };
 
     this.handleChange = this.handleChange.bind(this);
@@ -22,7 +23,7 @@ class StopSearch extends React.Component {
 
   handleChange(event) {
     let newVal = event.target.value;
-    this.setState({value: event.target.value});
+    this.setState({value: event.target.value, message: null});
     this.queryStops(newVal);
   }
 
@@ -54,7 +55,7 @@ class StopSearch extends React.Component {
         <div className="stop-search-results">
           <h3>Valitse pysäkki</h3>
           <div className="list-group">
-            { resultsList.length ? resultsList : <div></div>}
+            { resultsList.length ? resultsList : <div>Ei hakutuloksia</div>}
           </div>
         </div>
       );
@@ -66,10 +67,11 @@ class StopSearch extends React.Component {
   render() {
     return (
       <div className="container">
-        <form onSubmit={this.handleSubmit}>
+        { this.state.message }
+        <form onSubmit={ this.handleSubmit }>
           <label htmlFor="inputStop" aria-label="Pysäkkihaku"></label>
           <input id="inputStop" className="form-control" type="text"
-            value={this.state.value} onChange={this.handleChange}
+            value={ this.state.value } onChange={ this.handleChange }
             autoComplete="off" placeholder="Syötä pysäkin nimi tai tunnus"/>
         </form>
         { this.searchResults() }
@@ -142,7 +144,6 @@ class TimeTable extends React.Component {
       let min = this.timeDiff(item.scheduledDeparture);
       let realTime = this.parseTime(item.realtimeDeparture);
       let realMin = this.timeDiff(item.realtimeDeparture);
-      console.log('realtime', item.realtime, 'realTime', realTime)
       return {
         'time': time,
         'min': min,
@@ -158,7 +159,6 @@ class TimeTable extends React.Component {
   timeTable() {
     let rows = this.state.timetable.map((row) => {
       let gone = row.hasRealTime ? row.realMin < 0 : row.min < 0;
-      console.log('realtime', row.hasRealtime)
       let realTime = row.hasRealtime ? <span className="realtime small">{ ' ('+row.realTime+')' }</span> : null;
       let minSpan = <span className="small">{ ' min' }</span>;
       return <tr key={ row.line + '-' + row.time } className={ gone ? 'gone' : '' }>
@@ -223,14 +223,25 @@ class App extends React.Component {
     let stopParam = params.split('&').find(function(item) {
       return item.split('=')[0] === 'stop' ? true : false;
     });
-    let stopId = stopParam ? stopParam.split('=')[1] : '';
-    return stopId;
+    let stopValues = stopParam ? stopParam.split('=')[1] : '';
+    return stopValues.split(',')[0];
   }
+
+  checkFormat(stopIds) {
+    let stopIdReg = /^HSL:\d{7}$/;
+    let invalidId = stopIds.find((stopId) => !stopId.match(stopIdReg));
+    return !invalidId;
+   }
 
   render() {
     let stopId = this.state.stopId;
     if (stopId) {
-      return <TimeTable stopId={ stopId }/>;
+      if (this.checkFormat([stopId])) {
+        return <TimeTable stopId={ stopId }/>;
+      } else {
+        let message = <div className="error-message">Virheellinen pysäkkitunnus</div>;
+        return <StopSearch message={ message } />
+      }
     } else {
       return <StopSearch />;
     }

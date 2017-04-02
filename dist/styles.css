@@ -10,6 +10,13 @@ body {
 .stop-search-results .small {
   color: #bbb; }
 
+.loading {
+  padding: 1.2rem; }
+
+.error-message {
+  padding-top: 2rem;
+  color: #f1003f; }
+
 .timetable .stop-details {
   padding: 1.2rem 1.2rem 0.5rem; }
   .timetable .stop-details h4 {

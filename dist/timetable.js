@@ -36829,7 +36829,8 @@ var StopSearch = function (_React$Component) {
 
     _this.state = {
       value: '',
-      results: []
+      results: [],
+      message: props.message
     };
 
     _this.handleChange = _this.handleChange.bind(_this);
@@ -36842,7 +36843,7 @@ var StopSearch = function (_React$Component) {
     key: 'handleChange',
     value: function handleChange(event) {
       var newVal = event.target.value;
-      this.setState({ value: event.target.value });
+      this.setState({ value: event.target.value, message: null });
       this.queryStops(newVal);
     }
   }, {
@@ -36907,7 +36908,11 @@ var StopSearch = function (_React$Component) {
           React.createElement(
             'div',
             { className: 'list-group' },
-            resultsList.length ? resultsList : React.createElement('div', null)
+            resultsList.length ? resultsList : React.createElement(
+              'div',
+              null,
+              'Ei hakutuloksia'
+            )
           )
         );
       }
@@ -36920,6 +36925,7 @@ var StopSearch = function (_React$Component) {
       return React.createElement(
         'div',
         { className: 'container' },
+        this.state.message,
         React.createElement(
           'form',
           { onSubmit: this.handleSubmit },
@@ -37021,7 +37027,6 @@ var TimeTable = function (_React$Component2) {
         var min = _this5.timeDiff(item.scheduledDeparture);
         var realTime = _this5.parseTime(item.realtimeDeparture);
         var realMin = _this5.timeDiff(item.realtimeDeparture);
-        console.log('realtime', item.realtime, 'realTime', realTime);
         return {
           'time': time,
           'min': min,
@@ -37038,7 +37043,6 @@ var TimeTable = function (_React$Component2) {
     value: function timeTable() {
       var rows = this.state.timetable.map(function (row) {
         var gone = row.hasRealTime ? row.realMin < 0 : row.min < 0;
-        console.log('realtime', row.hasRealtime);
         var realTime = row.hasRealtime ? React.createElement(
           'span',
           { className: 'realtime small' },
@@ -37183,15 +37187,33 @@ var App = function (_React$Component3) {
       var stopParam = params.split('&').find(function (item) {
         return item.split('=')[0] === 'stop' ? true : false;
       });
-      var stopId = stopParam ? stopParam.split('=')[1] : '';
-      return stopId;
+      var stopValues = stopParam ? stopParam.split('=')[1] : '';
+      return stopValues.split(',')[0];
+    }
+  }, {
+    key: 'checkFormat',
+    value: function checkFormat(stopIds) {
+      var stopIdReg = /^HSL:\d{7}$/;
+      var invalidId = stopIds.find(function (stopId) {
+        return !stopId.match(stopIdReg);
+      });
+      return !invalidId;
     }
   }, {
     key: 'render',
     value: function render() {
       var stopId = this.state.stopId;
       if (stopId) {
-        return React.createElement(TimeTable, { stopId: stopId });
+        if (this.checkFormat([stopId])) {
+          return React.createElement(TimeTable, { stopId: stopId });
+        } else {
+          var message = React.createElement(
+            'div',
+            { className: 'error-message' },
+            'Virheellinen pys\xE4kkitunnus'
+          );
+          return React.createElement(StopSearch, { message: message });
+        }
       } else {
         return React.createElement(StopSearch, null);
       }
