@@ -36975,7 +36975,7 @@ var TimeTable = function (_React$Component2) {
         // Get from one minute ago to the future
         var now = Math.floor(Date.now() / 1000) - 60;
         var timeRange = 3600;
-        var limit = 10;
+        var limit = 7;
         fetch(apiUrl, {
           method: 'POST',
           body: JSON.stringify({ "query": "query StopPage($id_0:String!,$startTime_1:Long!) {stop(id:$id_0) {id,...F1}} fragment F0 on Stoptime {scheduledDeparture,realtime,realtimeDeparture,stopHeadsign,trip {pattern {route {shortName}}}} fragment F1 on Stop {_stoptimesWithoutPatterns3xYh4D:stoptimesWithoutPatterns(startTime:$startTime_1,timeRange:" + timeRange + ",numberOfDepartures:" + limit + ") {...F0},code,name}",
@@ -37129,12 +37129,13 @@ var TimeTable = function (_React$Component2) {
       var content = void 0;
       var stop = this.state.stop;
       var timetable = this.state.timetable;
-      if (!stop.name) {
-        // TODO: change into !timetable
+      if (!timetable) {
         content = React.createElement(
           'div',
           { className: 'loading' },
-          'Ladataan...'
+          'Ladataan pys\xE4kin ',
+          stop.id,
+          ' tietoja...'
         );
       } else {
         content = React.createElement(
@@ -37151,7 +37152,7 @@ var TimeTable = function (_React$Component2) {
             React.createElement(
               'span',
               { className: 'list-group-item-text small' },
-              stop.code || stop.gtfsId
+              stop.code || stop.id
             )
           ),
           this.timeTable()
@@ -37172,10 +37173,9 @@ var App = function (_React$Component3) {
 
     var _this6 = _possibleConstructorReturn(this, (App.__proto__ || Object.getPrototypeOf(App)).call(this, props));
 
-    var stopId = _this6.getStopQueryParam();
-
+    var stopIds = _this6.getStopQueryParam();
     _this6.state = {
-      stopId: stopId ? stopId : ''
+      stopIds: stopIds.length ? stopIds : []
     };
     return _this6;
   }
@@ -37188,7 +37188,7 @@ var App = function (_React$Component3) {
         return item.split('=')[0] === 'stop' ? true : false;
       });
       var stopValues = stopParam ? stopParam.split('=')[1] : '';
-      return stopValues.split(',')[0];
+      return stopValues.split(',').filter(String);
     }
   }, {
     key: 'checkFormat',
@@ -37202,10 +37202,17 @@ var App = function (_React$Component3) {
   }, {
     key: 'render',
     value: function render() {
-      var stopId = this.state.stopId;
-      if (stopId) {
-        if (this.checkFormat([stopId])) {
-          return React.createElement(TimeTable, { stopId: stopId });
+      var stopIds = this.state.stopIds;
+      if (stopIds.length) {
+        if (this.checkFormat(stopIds)) {
+          var timetables = stopIds.map(function (stopId) {
+            return React.createElement(TimeTable, { key: stopId, stopId: stopId });
+          });
+          return React.createElement(
+            'div',
+            { className: 'timetables' },
+            timetables
+          );
         } else {
           var message = React.createElement(
             'div',

@@ -103,7 +103,7 @@ class TimeTable extends React.Component {
       // Get from one minute ago to the future
       let now = Math.floor(Date.now() / 1000) - 60;
       let timeRange = 3600;
-      let limit = 10;
+      let limit = 7;
       fetch(apiUrl, {
         method: 'POST',
         body: JSON.stringify({"query":"query StopPage($id_0:String!,$startTime_1:Long!) {stop(id:$id_0) {id,...F1}} fragment F0 on Stoptime {scheduledDeparture,realtime,realtimeDeparture,stopHeadsign,trip {pattern {route {shortName}}}} fragment F1 on Stop {_stoptimesWithoutPatterns3xYh4D:stoptimesWithoutPatterns(startTime:$startTime_1,timeRange:"+timeRange+",numberOfDepartures:"+limit+") {...F0},code,name}",
@@ -190,14 +190,14 @@ class TimeTable extends React.Component {
     let content;
     let stop = this.state.stop;
     let timetable = this.state.timetable;
-    if (!stop.name) { // TODO: change into !timetable
-      content = (<div className="loading">Ladataan...</div>);
+    if (!timetable) {
+      content = (<div className="loading">Ladataan pysäkin { stop.id } tietoja...</div>);
     } else {
       content = (
         <div className="timetable">
           <div className="stop-details">
             <h4 className="list-group-item-heading">{ (stop.name || '') + ' '}</h4>
-            <span className="list-group-item-text small">{ stop.code || stop.gtfsId }</span>
+            <span className="list-group-item-text small">{ stop.code || stop.id }</span>
           </div>
           { this.timeTable() }
         </div>
@@ -211,10 +211,9 @@ class App extends React.Component {
   constructor(props) {
     super(props);
 
-    let stopId = this.getStopQueryParam();
-
+    let stopIds = this.getStopQueryParam();
     this.state = {
-      stopId: stopId ? stopId : ''
+      stopIds: stopIds.length ? stopIds : []
     };
   }
 
@@ -224,7 +223,7 @@ class App extends React.Component {
       return item.split('=')[0] === 'stop' ? true : false;
     });
     let stopValues = stopParam ? stopParam.split('=')[1] : '';
-    return stopValues.split(',')[0];
+    return stopValues.split(',').filter(String);
   }
 
   checkFormat(stopIds) {
@@ -234,10 +233,13 @@ class App extends React.Component {
    }
 
   render() {
-    let stopId = this.state.stopId;
-    if (stopId) {
-      if (this.checkFormat([stopId])) {
-        return <TimeTable stopId={ stopId }/>;
+    let stopIds = this.state.stopIds;
+    if (stopIds.length) {
+      if (this.checkFormat(stopIds)) {
+        let timetables = stopIds.map((stopId) => 
+          <TimeTable key={ stopId } stopId={ stopId }/>
+        );
+        return <div className="timetables">{ timetables }</div>;
       } else {
         let message = <div className="error-message">Virheellinen pysäkkitunnus</div>;
         return <StopSearch message={ message } />
