@@ -11,7 +11,7 @@ body {
   color: #bbb; }
 
 .timetable .stop-details {
-  padding: 1em 1em 0.25em; }
+  padding: 1.2rem 1.2rem 0.5rem; }
   .timetable .stop-details h4 {
     display: inline; }
   .timetable .stop-details span {
@@ -26,10 +26,10 @@ body {
     color: #bbb; }
   .timetable table.table.table-striped th:first-child,
   .timetable table.table.table-striped td:first-child {
-    padding-left: 1em; }
+    padding-left: 1.2rem; }
   .timetable table.table.table-striped th:last-child,
   .timetable table.table.table-striped td:last-child {
-    padding-right: 1em; }
+    padding-right: 1.2rem; }
   .timetable table.table.table-striped td.min {
     white-space: nowrap; }
   .timetable table.table.table-striped td .realtime {

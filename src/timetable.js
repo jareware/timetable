@@ -160,9 +160,10 @@ class TimeTable extends React.Component {
       let gone = row.hasRealTime ? row.realMin < 0 : row.min < 0;
       console.log('realtime', row.hasRealtime)
       let realTime = row.hasRealtime ? <span className="realtime small">{ ' ('+row.realTime+')' }</span> : null;
+      let minSpan = <span className="small">{ ' min' }</span>;
       return <tr key={ row.line + '-' + row.time } className={ gone ? 'gone' : '' }>
         <td className="time"><span>{ row.time }</span>{ realTime }</td>
-        <td className="min">{ gone ? '-' : row.min+' min'}</td>
+        <td className="min">{ gone ? '-' : row.min }{ !gone ? minSpan : null }</td>
         <td className="line">{ row.line }</td>
         <td className="dest small">{ row.dest || '' }</td>
       </tr>
@@ -196,7 +197,7 @@ class TimeTable extends React.Component {
         <div className="timetable">
           <div className="stop-details">
             <h4 className="list-group-item-heading">{ (stop.name || '') + ' '}</h4>
-            <span className="list-group-item-text">{ stop.code || stop.gtfsId }</span>
+            <span className="list-group-item-text small">{ stop.code || stop.gtfsId }</span>
           </div>
           { this.timeTable() }
         </div>

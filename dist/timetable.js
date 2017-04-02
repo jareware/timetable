@@ -37044,6 +37044,11 @@ var TimeTable = function (_React$Component2) {
           { className: 'realtime small' },
           ' (' + row.realTime + ')'
         ) : null;
+        var minSpan = React.createElement(
+          'span',
+          { className: 'small' },
+          ' min'
+        );
         return React.createElement(
           'tr',
           { key: row.line + '-' + row.time, className: gone ? 'gone' : '' },
@@ -37060,7 +37065,8 @@ var TimeTable = function (_React$Component2) {
           React.createElement(
             'td',
             { className: 'min' },
-            gone ? '-' : row.min + ' min'
+            gone ? '-' : row.min,
+            !gone ? minSpan : null
           ),
           React.createElement(
             'td',
@@ -37140,7 +37146,7 @@ var TimeTable = function (_React$Component2) {
             ),
             React.createElement(
               'span',
-              { className: 'list-group-item-text' },
+              { className: 'list-group-item-text small' },
               stop.code || stop.gtfsId
             )
           ),
