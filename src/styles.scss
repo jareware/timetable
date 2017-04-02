@@ -1,7 +1,8 @@
-$bgColor: #efefef;
-$color: #333;
-$lightColor: #565656;
-$extraLight: #bbb;
+$bg-color: #efefef;
+$text-color: #333;
+$light-color: #565656;
+$extra-light: #bbb;
+$border-color: #ddd;
 
 html {
   height: 100%;
@@ -9,14 +10,14 @@ html {
 
 body {
   min-height: 100%;
-  background-color: $bgColor;
-  color: $color;
+  background-color: $bg-color;
+  color: $text-color;
   font-size: 16px;
 }
 
 .stop-search-results {
   .small {
-    color: $extraLight;
+    color: $extra-light;
   }
 }
 
@@ -29,18 +30,19 @@ body {
     }
 
     span {
-      color: $lightColor;
+      color: $light-color;
     }
   }
 
   table.table.table-striped {
-    border-bottom: 2px solid #ddd;
+    border-bottom: 2px solid $border-color;
 
     .line {
       font-weight: bold;
     }
 
-    th, td {
+    th,
+    td {
       &:first-child {
         padding-left: 1em;
       }
@@ -51,7 +53,7 @@ body {
     }
 
     tr.gone {
-      color: $extraLight;
+      color: $extra-light;
     }
   }
 }

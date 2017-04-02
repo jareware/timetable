@@ -1,5 +1,7 @@
-import _ from 'lodash';
-import fetch from 'node-fetch';
+'use strict';
+
+let _ = require('lodash');
+let fetch = require('node-fetch');
 
 const apiUrl = "https://api.digitransit.fi/routing/v1/routers/hsl/index/graphql";
 const refreshInterval = 30000;

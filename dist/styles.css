@@ -16,13 +16,16 @@ body {
     display: inline; }
   .timetable .stop-details span {
     color: #565656; }
+
 .timetable table.table.table-striped {
   border-bottom: 2px solid #ddd; }
   .timetable table.table.table-striped .line {
     font-weight: bold; }
-  .timetable table.table.table-striped th:first-child, .timetable table.table.table-striped td:first-child {
+  .timetable table.table.table-striped th:first-child,
+  .timetable table.table.table-striped td:first-child {
     padding-left: 1em; }
-  .timetable table.table.table-striped th:last-child, .timetable table.table.table-striped td:last-child {
+  .timetable table.table.table-striped th:last-child,
+  .timetable table.table.table-striped td:last-child {
     padding-right: 1em; }
   .timetable table.table.table-striped tr.gone {
     color: #bbb; }

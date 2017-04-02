@@ -5,28 +5,16 @@ A very simple HSL timetable showing "app". Select your bus stop and view the nex
 Made with React.js and Bootstrap. 
 Requirements: python, sass, npm and nodejs.
 
-When starting for the first time, run ```npm install```, ```npm install -g watchify```.
+When starting for the first time, run ```npm install``` and ```gem install scss_lint```. And if you don't already have global grunt installed  ```npm install -g grunt-cli```.
 
 Do your edits to the files in `src/`.
 
-Run a simple HTTP server:
-
+Run a simple HTTP server and grunt in separate terminals:
 ```
 python -m SimpleHTTPServer
 ```
-
-Run real time compiling of JSX and SASS and watchify (these should be done using e.g. grunt):
-
 ```
-node node_modules/babel-cli/bin/babel.js --presets es2015,react --watch src --out-dir dist
+grunt
 ```
 
-```
-sass --watch src/styles.scss:dist/styles.css
-```
-
-```
-watchify dist/main.js -o dist/bundle.js
-```
-
-Go to ```localhost:8000```.
+Go to ```localhost:8000```
