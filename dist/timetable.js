@@ -36835,6 +36835,7 @@ var StopSearch = function (_React$Component) {
 
     _this.handleChange = _this.handleChange.bind(_this);
     _this.handleSubmit = _this.handleSubmit.bind(_this);
+    _this.clickOnModal = _this.clickOnModal.bind(_this);
     _this.handleClick = props.handleClick;
     _this.closeModal = props.closeModal;
     _this.queryStops = _.debounce(_this.queryStops, 500);
@@ -36926,11 +36927,18 @@ var StopSearch = function (_React$Component) {
       return content;
     }
   }, {
+    key: 'clickOnModal',
+    value: function clickOnModal(event) {
+      if (event.target == event.currentTarget) {
+        this.closeModal();
+      }
+    }
+  }, {
     key: 'render',
     value: function render() {
       return React.createElement(
         'div',
-        { className: 'add-stop-modal' },
+        { className: 'add-stop-modal', onClick: this.clickOnModal },
         React.createElement(
           'div',
           { className: 'add-stop-container' },

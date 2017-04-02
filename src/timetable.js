@@ -18,6 +18,7 @@ class StopSearch extends React.Component {
 
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.clickOnModal = this.clickOnModal.bind(this);
     this.handleClick = props.handleClick;
     this.closeModal = props.closeModal;
     this.queryStops = _.debounce(this.queryStops, 500);
@@ -68,9 +69,15 @@ class StopSearch extends React.Component {
     return content;
   }
 
+  clickOnModal(event) {
+    if (event.target == event.currentTarget) {
+      this.closeModal();
+    }
+  }
+
   render() {
     return (
-      <div className="add-stop-modal">
+      <div className="add-stop-modal" onClick={ this.clickOnModal }>
         <div className="add-stop-container">
           <button className="close" aria-label="Sulje pysäkkihaku" onClick={ this.closeModal }>
             <i className="fa fa-times" aria-hidden="true"></i>

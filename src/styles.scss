@@ -29,6 +29,10 @@ body {
   color: $error-color;
 }
 
+.content button:focus {
+  outline: 0;
+}
+
 button.add-stop {
   margin: 1.2rem 1.2rem 4rem;
   float: left;
@@ -57,24 +61,25 @@ button.add-stop {
   border: 2px solid $border-color;
   border-radius: 1rem;
 
-  @media (min-width: $breakpoint) {
-    padding: 2rem;
-    margin: 2rem;
-  }
-
   button.close {
     padding: 1rem;
     margin: -1rem -1rem 0;
+  }
+
+  @media (min-width: $breakpoint) {
+    padding: 2rem;
+    margin: 2rem auto;
+    width: 60rem;
+
+    button.close {
+      margin-bottom: 1rem;
+    }
   }
 }
 
 .stop-search-results {
   .small {
     color: $extra-light;
-  }
-
-  button:focus {
-    outline: 0;
   }
 }
 
