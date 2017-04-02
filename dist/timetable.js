@@ -36851,6 +36851,8 @@ var StopSearch = function (_React$Component) {
   }, {
     key: 'handleSubmit',
     value: function handleSubmit(event) {
+      // Hide on-screen keyboard on enter
+      document.activeElement.blur();
       event.preventDefault();
     }
   }, {
@@ -36934,7 +36936,7 @@ var StopSearch = function (_React$Component) {
           { className: 'add-stop-container' },
           React.createElement(
             'button',
-            { className: 'close', 'aria-label': 'Close', onClick: this.closeModal },
+            { className: 'close', 'aria-label': 'Sulje pys\xE4kkihaku', onClick: this.closeModal },
             React.createElement('i', { className: 'fa fa-times', 'aria-hidden': 'true' })
           ),
           React.createElement(
@@ -37152,7 +37154,7 @@ var TimeTable = function (_React$Component2) {
       } else {
         content = React.createElement(
           'div',
-          { className: 'timetable col-sm-6' },
+          { className: 'timetable' },
           React.createElement(
             'div',
             { className: 'stop-details' },
@@ -37209,8 +37211,8 @@ var App = function (_React$Component3) {
     }
   }, {
     key: 'handleSelectStop',
-    value: function handleSelectStop(state, stopId) {
-      var newStops = state.stopIds.concat([stopId]);
+    value: function handleSelectStop(stopIds, stopId) {
+      var newStops = stopIds.concat([stopId]);
       this.setState({ stopIds: newStops, modalOpen: false });
       window.location.hash = newStops;
     }
@@ -37225,21 +37227,42 @@ var App = function (_React$Component3) {
       this.setState({ modalOpen: false });
     }
   }, {
+    key: 'removeStop',
+    value: function removeStop(stopId, stopIds) {
+      var index = stopIds.indexOf(stopId);
+      if (index > -1) {
+        stopIds.splice(index, 1);
+      }
+      this.setState({ stopIds: stopIds });
+      window.location.hash = stopIds;
+    }
+  }, {
     key: 'render',
     value: function render() {
       var _this8 = this;
 
       var timetables = this.state.stopIds.map(function (stopId) {
+        var timetableContent = void 0;
         if (_this8.checkFormat(stopId)) {
-          return React.createElement(TimeTable, { key: stopId, stopId: stopId });
+          timetableContent = React.createElement(TimeTable, { key: stopId, stopId: stopId });
         } else {
-          return React.createElement(
+          timetableContent = React.createElement(
             'div',
             { className: 'error-message' },
             'Virheellinen pys\xE4kki-id: ',
             stopId
           );
         }
+        return React.createElement(
+          'div',
+          { className: 'timetable-container col-sm-6' },
+          React.createElement(
+            'button',
+            { className: 'close', 'aria-label': 'Poista pys\xE4kki', onClick: _this8.removeStop.bind(_this8, stopId, _this8.state.stopIds) },
+            React.createElement('i', { className: 'fa fa-times', 'aria-hidden': 'true' })
+          ),
+          timetableContent
+        );
       });
       var addStopButton = React.createElement(
         'button',
@@ -37255,7 +37278,7 @@ var App = function (_React$Component3) {
       );
       var modal = void 0;
       if (this.state.modalOpen) {
-        modal = React.createElement(StopSearch, { handleClick: this.handleSelectStop.bind(this, this.state), closeModal: this.closeModal });
+        modal = React.createElement(StopSearch, { handleClick: this.handleSelectStop.bind(this, this.state.stopIds), closeModal: this.closeModal });
       }
       return React.createElement(
         'div',

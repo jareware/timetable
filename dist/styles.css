@@ -11,7 +11,7 @@ body {
   padding: 1.2rem; }
 
 .error-message {
-  padding-top: 2rem;
+  padding: 2rem 1.2rem;
   color: #f1003f; }
 
 button.add-stop {
@@ -42,7 +42,8 @@ button.add-stop {
       padding: 2rem;
       margin: 2rem; } }
   .add-stop-container button.close {
-    margin-bottom: 1rem; }
+    padding: 1rem;
+    margin: -1rem -1rem 0; }
 
 .stop-search-results .small {
   color: #bbb; }
@@ -50,35 +51,37 @@ button.add-stop {
 .stop-search-results button:focus {
   outline: 0; }
 
-.timetable {
+.timetable-container {
   padding: 0;
   margin-bottom: 0.8rem;
   border-bottom: 2px solid #ddd; }
   @media (min-width: 768px) {
-    .timetable {
+    .timetable-container {
       border: 2px solid #ddd; } }
-  .timetable .stop-details {
+  .timetable-container button.close {
+    padding: 1.2rem; }
+  .timetable-container .stop-details {
     padding: 1.2rem 1.2rem 0.5rem; }
-    .timetable .stop-details h4 {
+    .timetable-container .stop-details h4 {
       display: inline; }
-    .timetable .stop-details span {
+    .timetable-container .stop-details span {
       color: #565656; }
-  .timetable table.table.table-striped {
+  .timetable-container table.table.table-striped {
     margin-bottom: 0; }
-    .timetable table.table.table-striped .line {
+    .timetable-container table.table.table-striped .line {
       font-weight: bold; }
-    .timetable table.table.table-striped tr.gone,
-    .timetable table.table.table-striped tr.gone .realtime {
+    .timetable-container table.table.table-striped tr.gone,
+    .timetable-container table.table.table-striped tr.gone .realtime {
       color: #bbb; }
-    .timetable table.table.table-striped th:first-child,
-    .timetable table.table.table-striped td:first-child {
+    .timetable-container table.table.table-striped th:first-child,
+    .timetable-container table.table.table-striped td:first-child {
       padding-left: 1.2rem; }
-    .timetable table.table.table-striped th:last-child,
-    .timetable table.table.table-striped td:last-child {
+    .timetable-container table.table.table-striped th:last-child,
+    .timetable-container table.table.table-striped td:last-child {
       padding-right: 1.2rem; }
-    .timetable table.table.table-striped td.min {
+    .timetable-container table.table.table-striped td.min {
       white-space: nowrap; }
-    .timetable table.table.table-striped td .realtime {
+    .timetable-container table.table.table-striped td .realtime {
       color: #03a9f4;
       vertical-align: text-top; }
 

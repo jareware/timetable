@@ -30,6 +30,8 @@ class StopSearch extends React.Component {
   }
 
   handleSubmit(event) {
+    // Hide on-screen keyboard on enter
+    document.activeElement.blur();
     event.preventDefault();
   }
 
@@ -70,7 +72,7 @@ class StopSearch extends React.Component {
     return (
       <div className="add-stop-modal">
         <div className="add-stop-container">
-          <button className="close" aria-label="Close" onClick={ this.closeModal }>
+          <button className="close" aria-label="Sulje pysäkkihaku" onClick={ this.closeModal }>
             <i className="fa fa-times" aria-hidden="true"></i>
           </button>
           <form onSubmit={ this.handleSubmit }>
@@ -200,7 +202,7 @@ class TimeTable extends React.Component {
       content = (<div className="loading">Ladataan pysäkin { stop.id } tietoja...</div>);
     } else {
       content = (
-        <div className="timetable col-sm-6">
+        <div className="timetable">
           <div className="stop-details">
             <h4 className="list-group-item-heading">{ (stop.name || '') + ' '}</h4>
             <span className="list-group-item-text small">{ stop.code || stop.id }</span>
@@ -236,8 +238,8 @@ class App extends React.Component {
     return !!stopId.match(stopIdReg);
    }
 
-  handleSelectStop(state, stopId) {
-    let newStops = state.stopIds.concat([stopId])
+  handleSelectStop(stopIds, stopId) {
+    let newStops = stopIds.concat([stopId])
     this.setState({ stopIds: newStops, modalOpen: false})
     window.location.hash = newStops;
   }
@@ -250,19 +252,37 @@ class App extends React.Component {
     this.setState({ modalOpen: false });
   }
 
+  removeStop(stopId, stopIds) {
+    let index = stopIds.indexOf(stopId)
+    if (index > -1) {
+      stopIds.splice(index, 1)
+    }
+    this.setState({ stopIds: stopIds })
+    window.location.hash = stopIds;
+  }
+
   render() {
     let timetables = this.state.stopIds.map((stopId) => {
+      let timetableContent;
       if (this.checkFormat(stopId)) {
-        return <TimeTable key={ stopId } stopId={ stopId }/>;
+        timetableContent = <TimeTable key={ stopId } stopId={ stopId }/>;
       } else {
-        return <div className="error-message">Virheellinen pysäkki-id: { stopId }</div>;
+        timetableContent = <div className="error-message">Virheellinen pysäkki-id: { stopId }</div>;
       }
+      return (
+        <div className="timetable-container col-sm-6">
+          <button className="close" aria-label="Poista pysäkki" onClick={ this.removeStop.bind(this, stopId, this.state.stopIds) }>
+            <i className="fa fa-times" aria-hidden="true"></i>
+          </button>
+          { timetableContent }
+        </div>
+      );
     });
     let addStopButton = <button className="btn btn-success add-stop" onClick={ this.openModal }><i className="fa fa-plus" aria-hidden="true"></i>Lisää pysäkki</button>;
     let content = (<div className="timetables">{ timetables }{ addStopButton }</div>);
     let modal;
     if (this.state.modalOpen) {
-      modal = <StopSearch handleClick={ this.handleSelectStop.bind(this, this.state) } closeModal={ this.closeModal }/>;
+      modal = <StopSearch handleClick={ this.handleSelectStop.bind(this, this.state.stopIds) } closeModal={ this.closeModal }/>;
     }
     return (
       <div className="content">
