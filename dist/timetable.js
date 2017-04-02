@@ -36835,6 +36835,9 @@ var StopSearch = function (_React$Component) {
 
     _this.handleChange = _this.handleChange.bind(_this);
     _this.handleSubmit = _this.handleSubmit.bind(_this);
+    _this.clickOnModal = _this.clickOnModal.bind(_this);
+    _this.handleClick = props.handleClick;
+    _this.closeModal = props.closeModal;
     _this.queryStops = _.debounce(_this.queryStops, 500);
     return _this;
   }
@@ -36849,6 +36852,8 @@ var StopSearch = function (_React$Component) {
   }, {
     key: 'handleSubmit',
     value: function handleSubmit(event) {
+      // Hide on-screen keyboard on enter
+      document.activeElement.blur();
       event.preventDefault();
     }
   }, {
@@ -36871,12 +36876,14 @@ var StopSearch = function (_React$Component) {
   }, {
     key: 'searchResults',
     value: function searchResults() {
+      var _this3 = this;
+
       var resultsList = this.state.results.filter(function (res) {
         return res.gtfsId;
       }).map(function (res) {
         return React.createElement(
-          'a',
-          { key: res.gtfsId, href: '?stop=' + res.gtfsId, className: 'list-group-item' },
+          'button',
+          { key: res.gtfsId, className: 'list-group-item', onClick: _this3.handleClick.bind(_this3, res.gtfsId) },
           React.createElement(
             'h4',
             { className: 'list-group-item-heading' },
@@ -36920,21 +36927,36 @@ var StopSearch = function (_React$Component) {
       return content;
     }
   }, {
+    key: 'clickOnModal',
+    value: function clickOnModal(event) {
+      if (event.target == event.currentTarget) {
+        this.closeModal();
+      }
+    }
+  }, {
     key: 'render',
     value: function render() {
       return React.createElement(
         'div',
-        { className: 'container' },
-        this.state.message,
+        { className: 'add-stop-modal', onClick: this.clickOnModal },
         React.createElement(
-          'form',
-          { onSubmit: this.handleSubmit },
-          React.createElement('label', { htmlFor: 'inputStop', 'aria-label': 'Pys\xE4kkihaku' }),
-          React.createElement('input', { id: 'inputStop', className: 'form-control', type: 'text',
-            value: this.state.value, onChange: this.handleChange,
-            autoComplete: 'off', placeholder: 'Sy\xF6t\xE4 pys\xE4kin nimi tai tunnus' })
-        ),
-        this.searchResults()
+          'div',
+          { className: 'add-stop-container' },
+          React.createElement(
+            'button',
+            { className: 'close', 'aria-label': 'Sulje pys\xE4kkihaku', onClick: this.closeModal },
+            React.createElement('i', { className: 'fa fa-times', 'aria-hidden': 'true' })
+          ),
+          React.createElement(
+            'form',
+            { onSubmit: this.handleSubmit },
+            React.createElement('label', { htmlFor: 'inputStop', 'aria-label': 'Pys\xE4kkihaku' }),
+            React.createElement('input', { id: 'inputStop', className: 'form-control', type: 'text',
+              value: this.state.value, onChange: this.handleChange,
+              autoComplete: 'off', placeholder: 'Sy\xF6t\xE4 pys\xE4kin nimi tai tunnus' })
+          ),
+          this.searchResults()
+        )
       );
     }
   }]);
@@ -36948,17 +36970,17 @@ var TimeTable = function (_React$Component2) {
   function TimeTable(props) {
     _classCallCheck(this, TimeTable);
 
-    var _this3 = _possibleConstructorReturn(this, (TimeTable.__proto__ || Object.getPrototypeOf(TimeTable)).call(this, props));
+    var _this4 = _possibleConstructorReturn(this, (TimeTable.__proto__ || Object.getPrototypeOf(TimeTable)).call(this, props));
 
     var stopId = props.stopId;
-    _this3.queryStop(stopId);
-    _this3.startRefresher(stopId);
+    _this4.queryStop(stopId);
+    _this4.startRefresher(stopId);
 
-    _this3.state = {
+    _this4.state = {
       stop: stopId ? { 'id': stopId } : '',
       timetable: []
     };
-    return _this3;
+    return _this4;
   }
 
   _createClass(TimeTable, [{
@@ -36969,7 +36991,7 @@ var TimeTable = function (_React$Component2) {
   }, {
     key: 'queryStop',
     value: function queryStop(stopId) {
-      var _this4 = this;
+      var _this5 = this;
 
       if (stopId) {
         // Get from one minute ago to the future
@@ -36986,9 +37008,9 @@ var TimeTable = function (_React$Component2) {
         }).then(function (json) {
           var result = json.data.stop;
           if (result) {
-            _this4.setState({
+            _this5.setState({
               stop: { 'id': stopId, 'code': result.code, 'name': result.name },
-              timetable: _this4.processTimeTable(result._stoptimesWithoutPatterns3xYh4D)
+              timetable: _this5.processTimeTable(result._stoptimesWithoutPatterns3xYh4D)
             });
           }
         }).catch(function (err) {
@@ -37020,13 +37042,13 @@ var TimeTable = function (_React$Component2) {
   }, {
     key: 'processTimeTable',
     value: function processTimeTable(data) {
-      var _this5 = this;
+      var _this6 = this;
 
       return data.map(function (item) {
-        var time = _this5.parseTime(item.scheduledDeparture);
-        var min = _this5.timeDiff(item.scheduledDeparture);
-        var realTime = _this5.parseTime(item.realtimeDeparture);
-        var realMin = _this5.timeDiff(item.realtimeDeparture);
+        var time = _this6.parseTime(item.scheduledDeparture);
+        var min = _this6.timeDiff(item.scheduledDeparture);
+        var realTime = _this6.parseTime(item.realtimeDeparture);
+        var realMin = _this6.timeDiff(item.realtimeDeparture);
         return {
           'time': time,
           'min': min,
@@ -37140,7 +37162,7 @@ var TimeTable = function (_React$Component2) {
       } else {
         content = React.createElement(
           'div',
-          { className: 'timetable col-sm-6' },
+          { className: 'timetable' },
           React.createElement(
             'div',
             { className: 'stop-details' },
@@ -37171,59 +37193,107 @@ var App = function (_React$Component3) {
   function App(props) {
     _classCallCheck(this, App);
 
-    var _this6 = _possibleConstructorReturn(this, (App.__proto__ || Object.getPrototypeOf(App)).call(this, props));
+    var _this7 = _possibleConstructorReturn(this, (App.__proto__ || Object.getPrototypeOf(App)).call(this, props));
 
-    var stopIds = _this6.getStopQueryParam();
-    _this6.state = {
-      stopIds: stopIds.length ? stopIds : []
+    var stopIds = _this7.getStopsFromHash();
+    _this7.state = {
+      stopIds: stopIds,
+      modalOpen: stopIds.length ? false : true
     };
-    return _this6;
+
+    _this7.openModal = _this7.openModal.bind(_this7);
+    _this7.closeModal = _this7.closeModal.bind(_this7);
+    return _this7;
   }
 
   _createClass(App, [{
-    key: 'getStopQueryParam',
-    value: function getStopQueryParam() {
-      var params = window.location.search.substr(1);
-      var stopParam = params.split('&').find(function (item) {
-        return item.split('=')[0] === 'stop' ? true : false;
-      });
-      var stopValues = stopParam ? stopParam.split('=')[1] : '';
-      return stopValues.split(',').filter(String);
+    key: 'getStopsFromHash',
+    value: function getStopsFromHash() {
+      return window.location.hash.substr(1).split(',').filter(String);
     }
   }, {
     key: 'checkFormat',
-    value: function checkFormat(stopIds) {
+    value: function checkFormat(stopId) {
       var stopIdReg = /^HSL:\d{7}$/;
-      var invalidId = stopIds.find(function (stopId) {
-        return !stopId.match(stopIdReg);
-      });
-      return !invalidId;
+      return !!stopId.match(stopIdReg);
+    }
+  }, {
+    key: 'handleSelectStop',
+    value: function handleSelectStop(stopIds, stopId) {
+      var newStops = stopIds.concat([stopId]);
+      this.setState({ stopIds: newStops, modalOpen: false });
+      window.location.hash = newStops;
+    }
+  }, {
+    key: 'openModal',
+    value: function openModal() {
+      this.setState({ modalOpen: true });
+    }
+  }, {
+    key: 'closeModal',
+    value: function closeModal() {
+      this.setState({ modalOpen: false });
+    }
+  }, {
+    key: 'removeStop',
+    value: function removeStop(stopId, stopIds) {
+      var index = stopIds.indexOf(stopId);
+      if (index > -1) {
+        stopIds.splice(index, 1);
+      }
+      this.setState({ stopIds: stopIds });
+      window.location.hash = stopIds;
     }
   }, {
     key: 'render',
     value: function render() {
-      var stopIds = this.state.stopIds;
-      if (stopIds.length) {
-        if (this.checkFormat(stopIds)) {
-          var timetables = stopIds.map(function (stopId) {
-            return React.createElement(TimeTable, { key: stopId, stopId: stopId });
-          });
-          return React.createElement(
-            'div',
-            { className: 'timetables' },
-            timetables
-          );
+      var _this8 = this;
+
+      var timetables = this.state.stopIds.map(function (stopId) {
+        var timetableContent = void 0;
+        if (_this8.checkFormat(stopId)) {
+          timetableContent = React.createElement(TimeTable, { key: stopId, stopId: stopId });
         } else {
-          var message = React.createElement(
+          timetableContent = React.createElement(
             'div',
             { className: 'error-message' },
-            'Virheellinen pys\xE4kkitunnus'
+            'Virheellinen pys\xE4kki-id: ',
+            stopId
           );
-          return React.createElement(StopSearch, { message: message });
         }
-      } else {
-        return React.createElement(StopSearch, null);
+        return React.createElement(
+          'div',
+          { className: 'timetable-container col-sm-6' },
+          React.createElement(
+            'button',
+            { className: 'close', 'aria-label': 'Poista pys\xE4kki', onClick: _this8.removeStop.bind(_this8, stopId, _this8.state.stopIds) },
+            React.createElement('i', { className: 'fa fa-times', 'aria-hidden': 'true' })
+          ),
+          timetableContent
+        );
+      });
+      var addStopButton = React.createElement(
+        'button',
+        { className: 'btn btn-success add-stop', onClick: this.openModal },
+        React.createElement('i', { className: 'fa fa-plus', 'aria-hidden': 'true' }),
+        'Lis\xE4\xE4 pys\xE4kki'
+      );
+      var content = React.createElement(
+        'div',
+        { className: 'timetables' },
+        timetables,
+        addStopButton
+      );
+      var modal = void 0;
+      if (this.state.modalOpen) {
+        modal = React.createElement(StopSearch, { handleClick: this.handleSelectStop.bind(this, this.state.stopIds), closeModal: this.closeModal });
       }
+      return React.createElement(
+        'div',
+        { className: 'content' },
+        content,
+        modal
+      );
     }
   }]);
 
