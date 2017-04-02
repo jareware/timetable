@@ -36836,6 +36836,7 @@ var StopSearch = function (_React$Component) {
     _this.handleChange = _this.handleChange.bind(_this);
     _this.handleSubmit = _this.handleSubmit.bind(_this);
     _this.handleClick = props.handleClick;
+    _this.closeModal = props.closeModal;
     _this.queryStops = _.debounce(_this.queryStops, 500);
     return _this;
   }
@@ -36879,7 +36880,7 @@ var StopSearch = function (_React$Component) {
       }).map(function (res) {
         return React.createElement(
           'button',
-          { key: res.gtfsId, href: '', className: 'list-group-item', onClick: _this3.handleClick.bind(_this3, res.gtfsId) },
+          { key: res.gtfsId, className: 'list-group-item', onClick: _this3.handleClick.bind(_this3, res.gtfsId) },
           React.createElement(
             'h4',
             { className: 'list-group-item-heading' },
@@ -36927,17 +36928,25 @@ var StopSearch = function (_React$Component) {
     value: function render() {
       return React.createElement(
         'div',
-        { className: 'container' },
-        this.state.message,
+        { className: 'add-stop-modal' },
         React.createElement(
-          'form',
-          { onSubmit: this.handleSubmit },
-          React.createElement('label', { htmlFor: 'inputStop', 'aria-label': 'Pys\xE4kkihaku' }),
-          React.createElement('input', { id: 'inputStop', className: 'form-control', type: 'text',
-            value: this.state.value, onChange: this.handleChange,
-            autoComplete: 'off', placeholder: 'Sy\xF6t\xE4 pys\xE4kin nimi tai tunnus' })
-        ),
-        this.searchResults()
+          'div',
+          { className: 'add-stop-container' },
+          React.createElement(
+            'button',
+            { className: 'close', 'aria-label': 'Close', onClick: this.closeModal },
+            React.createElement('i', { className: 'fa fa-times', 'aria-hidden': 'true' })
+          ),
+          React.createElement(
+            'form',
+            { onSubmit: this.handleSubmit },
+            React.createElement('label', { htmlFor: 'inputStop', 'aria-label': 'Pys\xE4kkihaku' }),
+            React.createElement('input', { id: 'inputStop', className: 'form-control', type: 'text',
+              value: this.state.value, onChange: this.handleChange,
+              autoComplete: 'off', placeholder: 'Sy\xF6t\xE4 pys\xE4kin nimi tai tunnus' })
+          ),
+          this.searchResults()
+        )
       );
     }
   }]);
@@ -37178,11 +37187,12 @@ var App = function (_React$Component3) {
 
     var stopIds = _this7.getStopsFromHash();
     _this7.state = {
-      stopIds: stopIds.length ? stopIds : [],
+      stopIds: stopIds,
       modalOpen: stopIds.length ? false : true
     };
 
-    _this7.handleClick = _this7.handleClick.bind(_this7, _this7.state);
+    _this7.openModal = _this7.openModal.bind(_this7);
+    _this7.closeModal = _this7.closeModal.bind(_this7);
     return _this7;
   }
 
@@ -37193,44 +37203,66 @@ var App = function (_React$Component3) {
     }
   }, {
     key: 'checkFormat',
-    value: function checkFormat(stopIds) {
+    value: function checkFormat(stopId) {
       var stopIdReg = /^HSL:\d{7}$/;
-      var invalidId = stopIds.find(function (stopId) {
-        return !stopId.match(stopIdReg);
-      });
-      return !invalidId;
+      return !!stopId.match(stopIdReg);
     }
   }, {
-    key: 'handleClick',
-    value: function handleClick(state, stopId) {
-      this.setState({ stopIds: state.stopIds.concat([stopId]) });
-      window.location.hash = stopId;
+    key: 'handleSelectStop',
+    value: function handleSelectStop(state, stopId) {
+      var newStops = state.stopIds.concat([stopId]);
+      this.setState({ stopIds: newStops, modalOpen: false });
+      window.location.hash = newStops;
+    }
+  }, {
+    key: 'openModal',
+    value: function openModal() {
+      this.setState({ modalOpen: true });
+    }
+  }, {
+    key: 'closeModal',
+    value: function closeModal() {
+      this.setState({ modalOpen: false });
     }
   }, {
     key: 'render',
     value: function render() {
-      var stopIds = this.state.stopIds;
-      if (stopIds.length) {
-        if (this.checkFormat(stopIds)) {
-          var timetables = stopIds.map(function (stopId) {
-            return React.createElement(TimeTable, { key: stopId, stopId: stopId });
-          });
+      var _this8 = this;
+
+      var timetables = this.state.stopIds.map(function (stopId) {
+        if (_this8.checkFormat(stopId)) {
+          return React.createElement(TimeTable, { key: stopId, stopId: stopId });
+        } else {
           return React.createElement(
             'div',
-            { className: 'timetables' },
-            timetables
-          );
-        } else {
-          var message = React.createElement(
-            'div',
             { className: 'error-message' },
-            'Virheellinen pys\xE4kkitunnus'
+            'Virheellinen pys\xE4kki-id: ',
+            stopId
           );
-          return React.createElement(StopSearch, { handleClick: this.handleClick, message: message });
         }
-      } else {
-        return React.createElement(StopSearch, { handleClick: this.handleClick });
+      });
+      var addStopButton = React.createElement(
+        'button',
+        { className: 'btn btn-success add-stop', onClick: this.openModal },
+        React.createElement('i', { className: 'fa fa-plus', 'aria-hidden': 'true' }),
+        'Lis\xE4\xE4 pys\xE4kki'
+      );
+      var content = React.createElement(
+        'div',
+        { className: 'timetables' },
+        timetables,
+        addStopButton
+      );
+      var modal = void 0;
+      if (this.state.modalOpen) {
+        modal = React.createElement(StopSearch, { handleClick: this.handleSelectStop.bind(this, this.state), closeModal: this.closeModal });
       }
+      return React.createElement(
+        'div',
+        { className: 'content' },
+        content,
+        modal
+      );
     }
   }]);
 

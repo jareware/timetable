@@ -19,6 +19,7 @@ class StopSearch extends React.Component {
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleClick = props.handleClick;
+    this.closeModal = props.closeModal;
     this.queryStops = _.debounce(this.queryStops, 500);
   }
 
@@ -44,7 +45,7 @@ class StopSearch extends React.Component {
 
   searchResults() {
     let resultsList = this.state.results.filter((res) => res.gtfsId).map((res) =>
-      <button key={ res.gtfsId } href="" className="list-group-item" onClick={ this.handleClick.bind(this, res.gtfsId) }>
+      <button key={ res.gtfsId } className="list-group-item" onClick={ this.handleClick.bind(this, res.gtfsId) }>
         <h4 className="list-group-item-heading">{ res.name || 'Pysäkki' }</h4>
         <p className="list-group-item-text">{ (res.code + ' ') || '' }<span className="small">{ res.gtfsId }</span></p>
       </button>
@@ -67,15 +68,19 @@ class StopSearch extends React.Component {
 
   render() {
     return (
-      <div className="container">
-        { this.state.message }
-        <form onSubmit={ this.handleSubmit }>
-          <label htmlFor="inputStop" aria-label="Pysäkkihaku"></label>
-          <input id="inputStop" className="form-control" type="text"
-            value={ this.state.value } onChange={ this.handleChange }
-            autoComplete="off" placeholder="Syötä pysäkin nimi tai tunnus"/>
-        </form>
-        { this.searchResults() }
+      <div className="add-stop-modal">
+        <div className="add-stop-container">
+          <button className="close" aria-label="Close" onClick={ this.closeModal }>
+            <i className="fa fa-times" aria-hidden="true"></i>
+          </button>
+          <form onSubmit={ this.handleSubmit }>
+            <label htmlFor="inputStop" aria-label="Pysäkkihaku"></label>
+            <input id="inputStop" className="form-control" type="text"
+              value={ this.state.value } onChange={ this.handleChange }
+              autoComplete="off" placeholder="Syötä pysäkin nimi tai tunnus"/>
+          </form>
+          { this.searchResults() }
+        </div>
       </div>
     );
   }
@@ -214,43 +219,57 @@ class App extends React.Component {
 
     let stopIds = this.getStopsFromHash();
     this.state = {
-      stopIds: stopIds.length ? stopIds : [],
+      stopIds: stopIds,
       modalOpen: stopIds.length ? false : true
     };
 
-    this.handleClick = this.handleClick.bind(this, this.state)
+    this.openModal = this.openModal.bind(this)
+    this.closeModal = this.closeModal.bind(this)
   }
 
   getStopsFromHash() {
     return window.location.hash.substr(1).split(',').filter(String);
   }
 
-  checkFormat(stopIds) {
+  checkFormat(stopId) {
     let stopIdReg = /^HSL:\d{7}$/;
-    let invalidId = stopIds.find((stopId) => !stopId.match(stopIdReg));
-    return !invalidId;
+    return !!stopId.match(stopIdReg);
    }
 
-  handleClick(state, stopId) {
-    this.setState({ stopIds: state.stopIds.concat([stopId])})
-    window.location.hash = stopId;
+  handleSelectStop(state, stopId) {
+    let newStops = state.stopIds.concat([stopId])
+    this.setState({ stopIds: newStops, modalOpen: false})
+    window.location.hash = newStops;
+  }
+
+  openModal() {
+    this.setState({ modalOpen: true });
+  }
+
+  closeModal() {
+    this.setState({ modalOpen: false });
   }
 
   render() {
-    let stopIds = this.state.stopIds;
-    if (stopIds.length) {
-      if (this.checkFormat(stopIds)) {
-        let timetables = stopIds.map((stopId) => 
-          <TimeTable key={ stopId } stopId={ stopId }/>
-        );
-        return <div className="timetables">{ timetables }</div>;
+    let timetables = this.state.stopIds.map((stopId) => {
+      if (this.checkFormat(stopId)) {
+        return <TimeTable key={ stopId } stopId={ stopId }/>;
       } else {
-        let message = <div className="error-message">Virheellinen pysäkkitunnus</div>;
-        return <StopSearch handleClick={ this.handleClick } message={ message } />
+        return <div className="error-message">Virheellinen pysäkki-id: { stopId }</div>;
       }
-    } else {
-      return <StopSearch handleClick={ this.handleClick } />;
+    });
+    let addStopButton = <button className="btn btn-success add-stop" onClick={ this.openModal }><i className="fa fa-plus" aria-hidden="true"></i>Lisää pysäkki</button>;
+    let content = (<div className="timetables">{ timetables }{ addStopButton }</div>);
+    let modal;
+    if (this.state.modalOpen) {
+      modal = <StopSearch handleClick={ this.handleSelectStop.bind(this, this.state) } closeModal={ this.closeModal }/>;
     }
+    return (
+      <div className="content">
+        { content }
+        { modal }
+      </div>
+    );
   }
 }
 
