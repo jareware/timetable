@@ -10,6 +10,9 @@ body {
 .stop-search-results .small {
   color: #bbb; }
 
+.stop-search-results button:focus {
+  outline: 0; }
+
 .loading {
   padding: 1.2rem; }
 

@@ -36835,6 +36835,7 @@ var StopSearch = function (_React$Component) {
 
     _this.handleChange = _this.handleChange.bind(_this);
     _this.handleSubmit = _this.handleSubmit.bind(_this);
+    _this.handleClick = props.handleClick;
     _this.queryStops = _.debounce(_this.queryStops, 500);
     return _this;
   }
@@ -36871,12 +36872,14 @@ var StopSearch = function (_React$Component) {
   }, {
     key: 'searchResults',
     value: function searchResults() {
+      var _this3 = this;
+
       var resultsList = this.state.results.filter(function (res) {
         return res.gtfsId;
       }).map(function (res) {
         return React.createElement(
-          'a',
-          { key: res.gtfsId, href: '?stop=' + res.gtfsId, className: 'list-group-item' },
+          'button',
+          { key: res.gtfsId, href: '', className: 'list-group-item', onClick: _this3.handleClick.bind(_this3, res.gtfsId) },
           React.createElement(
             'h4',
             { className: 'list-group-item-heading' },
@@ -36948,17 +36951,17 @@ var TimeTable = function (_React$Component2) {
   function TimeTable(props) {
     _classCallCheck(this, TimeTable);
 
-    var _this3 = _possibleConstructorReturn(this, (TimeTable.__proto__ || Object.getPrototypeOf(TimeTable)).call(this, props));
+    var _this4 = _possibleConstructorReturn(this, (TimeTable.__proto__ || Object.getPrototypeOf(TimeTable)).call(this, props));
 
     var stopId = props.stopId;
-    _this3.queryStop(stopId);
-    _this3.startRefresher(stopId);
+    _this4.queryStop(stopId);
+    _this4.startRefresher(stopId);
 
-    _this3.state = {
+    _this4.state = {
       stop: stopId ? { 'id': stopId } : '',
       timetable: []
     };
-    return _this3;
+    return _this4;
   }
 
   _createClass(TimeTable, [{
@@ -36969,7 +36972,7 @@ var TimeTable = function (_React$Component2) {
   }, {
     key: 'queryStop',
     value: function queryStop(stopId) {
-      var _this4 = this;
+      var _this5 = this;
 
       if (stopId) {
         // Get from one minute ago to the future
@@ -36986,9 +36989,9 @@ var TimeTable = function (_React$Component2) {
         }).then(function (json) {
           var result = json.data.stop;
           if (result) {
-            _this4.setState({
+            _this5.setState({
               stop: { 'id': stopId, 'code': result.code, 'name': result.name },
-              timetable: _this4.processTimeTable(result._stoptimesWithoutPatterns3xYh4D)
+              timetable: _this5.processTimeTable(result._stoptimesWithoutPatterns3xYh4D)
             });
           }
         }).catch(function (err) {
@@ -37020,13 +37023,13 @@ var TimeTable = function (_React$Component2) {
   }, {
     key: 'processTimeTable',
     value: function processTimeTable(data) {
-      var _this5 = this;
+      var _this6 = this;
 
       return data.map(function (item) {
-        var time = _this5.parseTime(item.scheduledDeparture);
-        var min = _this5.timeDiff(item.scheduledDeparture);
-        var realTime = _this5.parseTime(item.realtimeDeparture);
-        var realMin = _this5.timeDiff(item.realtimeDeparture);
+        var time = _this6.parseTime(item.scheduledDeparture);
+        var min = _this6.timeDiff(item.scheduledDeparture);
+        var realTime = _this6.parseTime(item.realtimeDeparture);
+        var realMin = _this6.timeDiff(item.realtimeDeparture);
         return {
           'time': time,
           'min': min,
@@ -37171,24 +37174,22 @@ var App = function (_React$Component3) {
   function App(props) {
     _classCallCheck(this, App);
 
-    var _this6 = _possibleConstructorReturn(this, (App.__proto__ || Object.getPrototypeOf(App)).call(this, props));
+    var _this7 = _possibleConstructorReturn(this, (App.__proto__ || Object.getPrototypeOf(App)).call(this, props));
 
-    var stopIds = _this6.getStopQueryParam();
-    _this6.state = {
-      stopIds: stopIds.length ? stopIds : []
+    var stopIds = _this7.getStopsFromHash();
+    _this7.state = {
+      stopIds: stopIds.length ? stopIds : [],
+      modalOpen: stopIds.length ? false : true
     };
-    return _this6;
+
+    _this7.handleClick = _this7.handleClick.bind(_this7, _this7.state);
+    return _this7;
   }
 
   _createClass(App, [{
-    key: 'getStopQueryParam',
-    value: function getStopQueryParam() {
-      var params = window.location.search.substr(1);
-      var stopParam = params.split('&').find(function (item) {
-        return item.split('=')[0] === 'stop' ? true : false;
-      });
-      var stopValues = stopParam ? stopParam.split('=')[1] : '';
-      return stopValues.split(',').filter(String);
+    key: 'getStopsFromHash',
+    value: function getStopsFromHash() {
+      return window.location.hash.substr(1).split(',').filter(String);
     }
   }, {
     key: 'checkFormat',
@@ -37198,6 +37199,12 @@ var App = function (_React$Component3) {
         return !stopId.match(stopIdReg);
       });
       return !invalidId;
+    }
+  }, {
+    key: 'handleClick',
+    value: function handleClick(state, stopId) {
+      this.setState({ stopIds: state.stopIds.concat([stopId]) });
+      window.location.hash = stopId;
     }
   }, {
     key: 'render',
@@ -37219,10 +37226,10 @@ var App = function (_React$Component3) {
             { className: 'error-message' },
             'Virheellinen pys\xE4kkitunnus'
           );
-          return React.createElement(StopSearch, { message: message });
+          return React.createElement(StopSearch, { handleClick: this.handleClick, message: message });
         }
       } else {
-        return React.createElement(StopSearch, null);
+        return React.createElement(StopSearch, { handleClick: this.handleClick });
       }
     }
   }]);

@@ -22,6 +22,10 @@ body {
   .small {
     color: $extra-light;
   }
+
+  button:focus {
+    outline: 0;
+  }
 }
 
 .loading {

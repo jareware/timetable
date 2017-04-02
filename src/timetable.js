@@ -18,6 +18,7 @@ class StopSearch extends React.Component {
 
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleClick = props.handleClick;
     this.queryStops = _.debounce(this.queryStops, 500);
   }
 
@@ -43,10 +44,10 @@ class StopSearch extends React.Component {
 
   searchResults() {
     let resultsList = this.state.results.filter((res) => res.gtfsId).map((res) =>
-      <a key={ res.gtfsId } href={ '?stop=' + res.gtfsId } className="list-group-item">
+      <button key={ res.gtfsId } href="" className="list-group-item" onClick={ this.handleClick.bind(this, res.gtfsId) }>
         <h4 className="list-group-item-heading">{ res.name || 'Pysäkki' }</h4>
         <p className="list-group-item-text">{ (res.code + ' ') || '' }<span className="small">{ res.gtfsId }</span></p>
-      </a>
+      </button>
     );
 
     let content;
@@ -211,19 +212,17 @@ class App extends React.Component {
   constructor(props) {
     super(props);
 
-    let stopIds = this.getStopQueryParam();
+    let stopIds = this.getStopsFromHash();
     this.state = {
-      stopIds: stopIds.length ? stopIds : []
+      stopIds: stopIds.length ? stopIds : [],
+      modalOpen: stopIds.length ? false : true
     };
+
+    this.handleClick = this.handleClick.bind(this, this.state)
   }
 
-  getStopQueryParam() {
-    let params = window.location.search.substr(1);
-    let stopParam = params.split('&').find(function(item) {
-      return item.split('=')[0] === 'stop' ? true : false;
-    });
-    let stopValues = stopParam ? stopParam.split('=')[1] : '';
-    return stopValues.split(',').filter(String);
+  getStopsFromHash() {
+    return window.location.hash.substr(1).split(',').filter(String);
   }
 
   checkFormat(stopIds) {
@@ -231,6 +230,11 @@ class App extends React.Component {
     let invalidId = stopIds.find((stopId) => !stopId.match(stopIdReg));
     return !invalidId;
    }
+
+  handleClick(state, stopId) {
+    this.setState({ stopIds: state.stopIds.concat([stopId])})
+    window.location.hash = stopId;
+  }
 
   render() {
     let stopIds = this.state.stopIds;
@@ -242,10 +246,10 @@ class App extends React.Component {
         return <div className="timetables">{ timetables }</div>;
       } else {
         let message = <div className="error-message">Virheellinen pysäkkitunnus</div>;
-        return <StopSearch message={ message } />
+        return <StopSearch handleClick={ this.handleClick } message={ message } />
       }
     } else {
-      return <StopSearch />;
+      return <StopSearch handleClick={ this.handleClick } />;
     }
   }
 }
