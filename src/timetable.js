@@ -138,7 +138,15 @@ class TimeTable extends React.Component {
     }
   }
 
-  parseTime(secs) {
+  refSecsToSecs(refSecs) {
+    // The night buses use the start of the previous day as a reference
+    let oneDay = 60 * 60 * 24;
+    let secs = refSecs > oneDay ? (refSecs - oneDay) : refSecs;
+    return secs;
+  }
+
+  parseTime(refSecs) {
+    let secs = this.refSecsToSecs(refSecs);
     let hours = Math.floor(secs/(60*60));
     let minutes = Math.floor((secs - hours*60*60)/60);
     if (hours < 10) { hours = '0'+hours }
@@ -146,9 +154,10 @@ class TimeTable extends React.Component {
     return hours + ':' + minutes;
   }
 
-  timeDiff(secs) {
+  timeDiff(refSecs) {
     let dt = new Date();
     let nowSecs = dt.getSeconds() + (60 * dt.getMinutes()) + (60 * 60 * dt.getHours());
+    let secs = this.refSecsToSecs(refSecs);
     let diff = Math.floor((secs - nowSecs)/60);
     return diff;
   }
@@ -156,15 +165,13 @@ class TimeTable extends React.Component {
   processTimeTable(data) {
     return data.map((item) => {
       let time = this.parseTime(item.scheduledDeparture);
-      let min = this.timeDiff(item.scheduledDeparture);
       let realTime = this.parseTime(item.realtimeDeparture);
-      let realMin = this.timeDiff(item.realtimeDeparture);
+      let min = this.timeDiff(item.realtimeDeparture);
       return {
         'time': time,
         'min': min,
         'hasRealtime': item.realtime,
         'realTime': realTime,
-        'realMin': realMin,
         'line': item.trip.pattern.route.shortName,
         'dest': item.stopHeadsign
       }
@@ -173,12 +180,13 @@ class TimeTable extends React.Component {
 
   timeTable() {
     let rows = this.state.timetable.map((row) => {
-      let gone = row.hasRealTime ? row.realMin < 0 : row.min < 0;
-      let realTime = row.hasRealtime ? <span className="realtime small">{ ' ('+row.realTime+')' }</span> : null;
+      let mins = row.min;
+      let gone = mins < 0;
+      let realTime = row.hasRealtime ? ' (' + row.realTime + ')' : null;
       let minSpan = <span className="small">{ ' min' }</span>;
       return <tr key={ row.line + '-' + row.time } className={ gone ? 'gone' : '' }>
-        <td className="time"><span>{ row.time }</span>{ realTime }</td>
-        <td className="min">{ gone ? '-' : row.min }{ !gone ? minSpan : null }</td>
+        <td className="time"><span>{ row.time }</span><span className="realtime small">{ realTime }</span></td>
+        <td className="min">{ gone ? '-' : mins }{ gone ? null : minSpan }</td>
         <td className="line">{ row.line }</td>
         <td className="dest small">{ row.dest || '' }</td>
       </tr>

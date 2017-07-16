@@ -37019,8 +37019,17 @@ var TimeTable = function (_React$Component2) {
       }
     }
   }, {
+    key: 'refSecsToSecs',
+    value: function refSecsToSecs(refSecs) {
+      // The night buses use the start of the previous day as a reference
+      var oneDay = 60 * 60 * 24;
+      var secs = refSecs > oneDay ? refSecs - oneDay : refSecs;
+      return secs;
+    }
+  }, {
     key: 'parseTime',
-    value: function parseTime(secs) {
+    value: function parseTime(refSecs) {
+      var secs = this.refSecsToSecs(refSecs);
       var hours = Math.floor(secs / (60 * 60));
       var minutes = Math.floor((secs - hours * 60 * 60) / 60);
       if (hours < 10) {
@@ -37033,9 +37042,10 @@ var TimeTable = function (_React$Component2) {
     }
   }, {
     key: 'timeDiff',
-    value: function timeDiff(secs) {
+    value: function timeDiff(refSecs) {
       var dt = new Date();
       var nowSecs = dt.getSeconds() + 60 * dt.getMinutes() + 60 * 60 * dt.getHours();
+      var secs = this.refSecsToSecs(refSecs);
       var diff = Math.floor((secs - nowSecs) / 60);
       return diff;
     }
@@ -37046,15 +37056,13 @@ var TimeTable = function (_React$Component2) {
 
       return data.map(function (item) {
         var time = _this6.parseTime(item.scheduledDeparture);
-        var min = _this6.timeDiff(item.scheduledDeparture);
         var realTime = _this6.parseTime(item.realtimeDeparture);
-        var realMin = _this6.timeDiff(item.realtimeDeparture);
+        var min = _this6.timeDiff(item.realtimeDeparture);
         return {
           'time': time,
           'min': min,
           'hasRealtime': item.realtime,
           'realTime': realTime,
-          'realMin': realMin,
           'line': item.trip.pattern.route.shortName,
           'dest': item.stopHeadsign
         };
@@ -37064,12 +37072,9 @@ var TimeTable = function (_React$Component2) {
     key: 'timeTable',
     value: function timeTable() {
       var rows = this.state.timetable.map(function (row) {
-        var gone = row.hasRealTime ? row.realMin < 0 : row.min < 0;
-        var realTime = row.hasRealtime ? React.createElement(
-          'span',
-          { className: 'realtime small' },
-          ' (' + row.realTime + ')'
-        ) : null;
+        var mins = row.min;
+        var gone = mins < 0;
+        var realTime = row.hasRealtime ? ' (' + row.realTime + ')' : null;
         var minSpan = React.createElement(
           'span',
           { className: 'small' },
@@ -37086,13 +37091,17 @@ var TimeTable = function (_React$Component2) {
               null,
               row.time
             ),
-            realTime
+            React.createElement(
+              'span',
+              { className: 'realtime small' },
+              realTime
+            )
           ),
           React.createElement(
             'td',
             { className: 'min' },
-            gone ? '-' : row.min,
-            !gone ? minSpan : null
+            gone ? '-' : mins,
+            gone ? null : minSpan
           ),
           React.createElement(
             'td',
