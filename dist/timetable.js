@@ -37019,8 +37019,17 @@ var TimeTable = function (_React$Component2) {
       }
     }
   }, {
+    key: 'refSecsToSecs',
+    value: function refSecsToSecs(refSecs) {
+      // The night buses use the start of the previous day as a reference
+      var oneDay = 60 * 60 * 24;
+      var secs = refSecs > oneDay ? refSecs - oneDay : refSecs;
+      return secs;
+    }
+  }, {
     key: 'parseTime',
-    value: function parseTime(secs) {
+    value: function parseTime(refSecs) {
+      var secs = this.refSecsToSecs(refSecs);
       var hours = Math.floor(secs / (60 * 60));
       var minutes = Math.floor((secs - hours * 60 * 60) / 60);
       if (hours < 10) {
@@ -37033,9 +37042,10 @@ var TimeTable = function (_React$Component2) {
     }
   }, {
     key: 'timeDiff',
-    value: function timeDiff(secs) {
+    value: function timeDiff(refSecs) {
       var dt = new Date();
       var nowSecs = dt.getSeconds() + 60 * dt.getMinutes() + 60 * 60 * dt.getHours();
+      var secs = this.refSecsToSecs(refSecs);
       var diff = Math.floor((secs - nowSecs) / 60);
       return diff;
     }
