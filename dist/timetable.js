@@ -37046,15 +37046,13 @@ var TimeTable = function (_React$Component2) {
 
       return data.map(function (item) {
         var time = _this6.parseTime(item.scheduledDeparture);
-        var min = _this6.timeDiff(item.scheduledDeparture);
         var realTime = _this6.parseTime(item.realtimeDeparture);
-        var realMin = _this6.timeDiff(item.realtimeDeparture);
+        var min = _this6.timeDiff(item.realtimeDeparture);
         return {
           'time': time,
           'min': min,
           'hasRealtime': item.realtime,
           'realTime': realTime,
-          'realMin': realMin,
           'line': item.trip.pattern.route.shortName,
           'dest': item.stopHeadsign
         };
@@ -37064,12 +37062,9 @@ var TimeTable = function (_React$Component2) {
     key: 'timeTable',
     value: function timeTable() {
       var rows = this.state.timetable.map(function (row) {
-        var gone = row.hasRealTime ? row.realMin < 0 : row.min < 0;
-        var realTime = row.hasRealtime ? React.createElement(
-          'span',
-          { className: 'realtime small' },
-          ' (' + row.realTime + ')'
-        ) : null;
+        var mins = row.min;
+        var gone = mins < 0;
+        var realTime = row.hasRealtime ? ' (' + row.realTime + ')' : null;
         var minSpan = React.createElement(
           'span',
           { className: 'small' },
@@ -37086,13 +37081,17 @@ var TimeTable = function (_React$Component2) {
               null,
               row.time
             ),
-            realTime
+            React.createElement(
+              'span',
+              { className: 'realtime small' },
+              realTime
+            )
           ),
           React.createElement(
             'td',
             { className: 'min' },
-            gone ? '-' : row.min,
-            !gone ? minSpan : null
+            gone ? '-' : mins,
+            gone ? null : minSpan
           ),
           React.createElement(
             'td',
