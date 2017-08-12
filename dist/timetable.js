@@ -36818,6 +36818,8 @@ var fetch = require('node-fetch');
 
 var apiUrl = "https://api.digitransit.fi/routing/v1/routers/hsl/index/graphql";
 var refreshInterval = 30000;
+var rowLimit = 35;
+var rowCount = 7;
 
 var StopSearch = function (_React$Component) {
   _inherits(StopSearch, _React$Component);
@@ -36978,12 +36980,30 @@ var TimeTable = function (_React$Component2) {
 
     _this4.state = {
       stop: stopId ? { 'id': stopId } : '',
-      timetable: []
+      timetable: [],
+      limit: rowCount,
+      visibleRows: [],
+      hideShowMore: true
     };
     return _this4;
   }
 
   _createClass(TimeTable, [{
+    key: 'setVisibleRows',
+    value: function setVisibleRows() {
+      var addCount = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+
+      var timetable = this.state.timetable;
+      var limit = Math.min(this.state.limit + addCount, rowLimit, timetable.length);
+      var visibleRows = timetable.slice(0, limit);
+      var hideShowMore = limit >= timetable.length;
+      this.setState({
+        visibleRows: visibleRows,
+        limit: limit,
+        hideShowMore: hideShowMore
+      });
+    }
+  }, {
     key: 'startRefresher',
     value: function startRefresher(stopId) {
       setInterval(this.queryStop.bind(this, stopId), refreshInterval);
@@ -36994,14 +37014,15 @@ var TimeTable = function (_React$Component2) {
       var _this5 = this;
 
       if (stopId) {
-        // Get from one minute ago to the future
+        // Default: from one minute ago to one hour to the future
         var now = Math.floor(Date.now() / 1000) - 60;
         var timeRange = 3600;
-        var limit = 7;
         fetch(apiUrl, {
           method: 'POST',
-          body: JSON.stringify({ "query": "query StopPage($id_0:String!,$startTime_1:Long!) {stop(id:$id_0) {id,...F1}} fragment F0 on Stoptime {scheduledDeparture,realtime,realtimeDeparture,stopHeadsign,trip {pattern {route {shortName}}}} fragment F1 on Stop {_stoptimesWithoutPatterns3xYh4D:stoptimesWithoutPatterns(startTime:$startTime_1,timeRange:" + timeRange + ",numberOfDepartures:" + limit + ") {...F0},code,name}",
-            "variables": { "id_0": stopId, "startTime_1": now } }),
+          body: JSON.stringify({
+            "query": "query StopPage($id_0:String!,$startTime_1:Long!) " + "{stop(id:$id_0) {id,...F1}} fragment F0 on Stoptime " + "{scheduledDeparture,realtime,realtimeDeparture,stopHeadsign,trip " + "{pattern {route {shortName}}}} fragment F1 on Stop " + "{_stoptimesWithoutPatterns3xYh4D:stoptimesWithoutPatterns" + "(startTime:$startTime_1,timeRange:" + timeRange + ",numberOfDepartures:" + rowLimit + ") {...F0},code,name}",
+            "variables": { "id_0": stopId, "startTime_1": now }
+          }),
           headers: { 'Content-Type': 'application/json' }
         }).then(function (res) {
           return res.json();
@@ -37012,6 +37033,7 @@ var TimeTable = function (_React$Component2) {
               stop: { 'id': stopId, 'code': result.code, 'name': result.name },
               timetable: _this5.processTimeTable(result._stoptimesWithoutPatterns3xYh4D)
             });
+            _this5.setVisibleRows();
           }
         }).catch(function (err) {
           return console.log(err);
@@ -37069,9 +37091,15 @@ var TimeTable = function (_React$Component2) {
       });
     }
   }, {
+    key: 'showMore',
+    value: function showMore() {
+      this.setVisibleRows(rowCount);
+    }
+  }, {
     key: 'timeTable',
     value: function timeTable() {
-      var rows = this.state.timetable.map(function (row) {
+      var timetable = this.state.visibleRows;
+      var rows = timetable.map(function (row) {
         var mins = row.min;
         var gone = mins < 0;
         var realTime = row.hasRealtime ? ' (' + row.realTime + ')' : null;
@@ -37080,9 +37108,10 @@ var TimeTable = function (_React$Component2) {
           { className: 'small' },
           ' min'
         );
+        var rowClass = 'data-row ' + (gone ? 'gone' : '');
         return React.createElement(
           'tr',
-          { key: row.line + '-' + row.time, className: gone ? 'gone' : '' },
+          { key: row.line + '-' + row.time, className: rowClass },
           React.createElement(
             'td',
             { className: 'time' },
@@ -37115,6 +37144,16 @@ var TimeTable = function (_React$Component2) {
           )
         );
       });
+      var showMoreRow = React.createElement(
+        'tr',
+        { className: 'show-more small', onClick: this.showMore.bind(this) },
+        React.createElement(
+          'td',
+          { colSpan: 4 },
+          React.createElement('i', { className: 'fa fa-chevron-down', 'aria-hidden': 'true' })
+        )
+      );
+      var showMore = !this.state.hideShowMore ? showMoreRow : null;
 
       return React.createElement(
         'table',
@@ -37150,7 +37189,8 @@ var TimeTable = function (_React$Component2) {
         React.createElement(
           'tbody',
           null,
-          rows
+          rows,
+          showMore
         )
       );
     }

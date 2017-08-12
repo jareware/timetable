@@ -5,6 +5,8 @@ let fetch = require('node-fetch');
 
 const apiUrl = "https://api.digitransit.fi/routing/v1/routers/hsl/index/graphql";
 const refreshInterval = 30000;
+const rowLimit = 35;
+const rowCount = 7;
 
 class StopSearch extends React.Component {
   constructor(props) {
@@ -106,7 +108,22 @@ class TimeTable extends React.Component {
     this.state = {
       stop: stopId ? {'id': stopId} : '',
       timetable: [],
+      limit: rowCount,
+      visibleRows: [],
+      hideShowMore: true
     };
+  }
+
+  setVisibleRows(addCount=0) {
+    let timetable = this.state.timetable;
+    let limit = Math.min(this.state.limit + addCount, rowLimit, timetable.length);
+    let visibleRows = timetable.slice(0, limit);
+    let hideShowMore = limit >= timetable.length;
+    this.setState({
+      visibleRows: visibleRows,
+      limit: limit,
+      hideShowMore: hideShowMore
+    });
   }
 
   startRefresher(stopId) {
@@ -115,14 +132,21 @@ class TimeTable extends React.Component {
 
   queryStop(stopId) {
     if (stopId) {
-      // Get from one minute ago to the future
+      // Default: from one minute ago to one hour to the future
       let now = Math.floor(Date.now() / 1000) - 60;
       let timeRange = 3600;
-      let limit = 7;
       fetch(apiUrl, {
         method: 'POST',
-        body: JSON.stringify({"query":"query StopPage($id_0:String!,$startTime_1:Long!) {stop(id:$id_0) {id,...F1}} fragment F0 on Stoptime {scheduledDeparture,realtime,realtimeDeparture,stopHeadsign,trip {pattern {route {shortName}}}} fragment F1 on Stop {_stoptimesWithoutPatterns3xYh4D:stoptimesWithoutPatterns(startTime:$startTime_1,timeRange:"+timeRange+",numberOfDepartures:"+limit+") {...F0},code,name}",
-          "variables":{"id_0":stopId,"startTime_1":now}}),
+        body: JSON.stringify({
+          "query":"query StopPage($id_0:String!,$startTime_1:Long!) "
+            +"{stop(id:$id_0) {id,...F1}} fragment F0 on Stoptime "
+            +"{scheduledDeparture,realtime,realtimeDeparture,stopHeadsign,trip "
+            +"{pattern {route {shortName}}}} fragment F1 on Stop "
+            +"{_stoptimesWithoutPatterns3xYh4D:stoptimesWithoutPatterns"
+            +"(startTime:$startTime_1,timeRange:"+timeRange
+            +",numberOfDepartures:"+rowLimit+") {...F0},code,name}",
+          "variables":{"id_0":stopId,"startTime_1":now}
+        }),
         headers: { 'Content-Type': 'application/json' }
       }).then(res => res.json())
         .then(json => {
@@ -131,7 +155,8 @@ class TimeTable extends React.Component {
             this.setState({
               stop: {'id': stopId, 'code': result.code, 'name': result.name},
               timetable: this.processTimeTable(result._stoptimesWithoutPatterns3xYh4D)
-            })
+            });
+            this.setVisibleRows();
           }
         })
         .catch(err => console.log(err));
@@ -178,19 +203,38 @@ class TimeTable extends React.Component {
     });
   }
 
+  showMore() {
+    this.setVisibleRows(rowCount);
+  }
+
   timeTable() {
-    let rows = this.state.timetable.map((row) => {
+    let timetable = this.state.visibleRows;
+    let rows = timetable.map((row) => {
       let mins = row.min;
       let gone = mins < 0;
       let realTime = row.hasRealtime ? ' (' + row.realTime + ')' : null;
       let minSpan = <span className="small">{ ' min' }</span>;
-      return <tr key={ row.line + '-' + row.time } className={ gone ? 'gone' : '' }>
-        <td className="time"><span>{ row.time }</span><span className="realtime small">{ realTime }</span></td>
-        <td className="min">{ gone ? '-' : mins }{ gone ? null : minSpan }</td>
-        <td className="line">{ row.line }</td>
-        <td className="dest small">{ row.dest || '' }</td>
-      </tr>
+      let rowClass = 'data-row ' + (gone ? 'gone' : '');
+      return (
+        <tr key={ row.line + '-' + row.time } className={ rowClass }>
+          <td className="time">
+            <span>{ row.time }</span>
+            <span className="realtime small">{ realTime }</span>
+          </td>
+          <td className="min">{ gone ? '-' : mins }{ gone ? null : minSpan }</td>
+          <td className="line">{ row.line }</td>
+          <td className="dest small">{ row.dest || '' }</td>
+        </tr>
+      );
     });
+    let showMoreRow = (
+      <tr className="show-more small" onClick={ this.showMore.bind(this) }>
+        <td colSpan={4}>
+          <i className="fa fa-chevron-down" aria-hidden="true"></i>
+        </td>
+      </tr>
+    );
+    let showMore = !this.state.hideShowMore ? showMoreRow : null;
 
     return (
       <table className="table table-striped">
@@ -198,12 +242,15 @@ class TimeTable extends React.Component {
           <tr>
             <th className="col-xs-2 col-sm-2">Lähtee</th>
             <th className="col-xs-2 col-sm-2">Min</th>
-            <th className="col-xs-1 col-sm-1"><i className="fa fa-bus" aria-hidden="true"></i></th>
+            <th className="col-xs-1 col-sm-1">
+              <i className="fa fa-bus" aria-hidden="true"></i>
+            </th>
             <th>Määränpää</th>
           </tr>
         </thead>
         <tbody>
           { rows }
+          { showMore }
         </tbody>
       </table>
     );

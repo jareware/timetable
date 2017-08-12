@@ -80,6 +80,9 @@ button.add-stop {
     .timetable-container table.table.table-striped tr.gone,
     .timetable-container table.table.table-striped tr.gone .realtime {
       color: #bbb; }
+    .timetable-container table.table.table-striped tr.show-more {
+      text-align: center;
+      cursor: pointer; }
     .timetable-container table.table.table-striped th:first-child,
     .timetable-container table.table.table-striped td:first-child {
       padding-left: 1.2rem; }

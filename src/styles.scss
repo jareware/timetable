@@ -130,6 +130,11 @@ button.add-stop {
       }
     }
 
+    tr.show-more {
+      text-align: center;
+      cursor: pointer;
+    }
+
     th,
     td {
       &:first-child {
