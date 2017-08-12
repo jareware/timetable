@@ -110,19 +110,28 @@ class TimeTable extends React.Component {
       timetable: [],
       limit: rowCount,
       visibleRows: [],
-      hideShowMore: true
+      hideShowMore: true,
+      lines: [],
+      selectedLines: []
     };
   }
 
-  setVisibleRows(addCount=0) {
+  setVisibleRows(addCount=0, newSelectedLines) {
     let timetable = this.state.timetable;
-    let limit = Math.min(this.state.limit + addCount, rowLimit, timetable.length);
-    let visibleRows = timetable.slice(0, limit);
-    let hideShowMore = limit >= timetable.length;
+    let selectedLines = newSelectedLines || this.state.selectedLines;
+    let filteredRows = timetable.filter((item) => {
+      return this.isSelected(item.line, selectedLines);
+    });
+    let showAll = this.isSelected('all', selectedLines) || selectedLines.length === 0;
+    let rows = showAll ? timetable : filteredRows;
+    let limit = Math.min(this.state.limit + addCount, rowLimit, rows.length);
+    let visibleRows = rows.slice(0, limit);
+    let hideShowMore = limit >= rows.length;
     this.setState({
       visibleRows: visibleRows,
-      limit: limit,
-      hideShowMore: hideShowMore
+      limit: Math.max(limit, rowCount),
+      hideShowMore: hideShowMore,
+      selectedLines: selectedLines
     });
   }
 
@@ -133,19 +142,28 @@ class TimeTable extends React.Component {
   queryStop(stopId) {
     if (stopId) {
       // Default: from one minute ago to one hour to the future
-      let now = Math.floor(Date.now() / 1000) - 60;
+      let now = new Date();
+      let start = Math.floor(now.getTime() / 1000) - 60;
+      let date = now.toISOString().slice(0,10).replace(/[-]/g,"");
       let timeRange = 3600;
       fetch(apiUrl, {
         method: 'POST',
         body: JSON.stringify({
           "query":"query StopPage($id_0:String!,$startTime_1:Long!) "
-            +"{stop(id:$id_0) {id,...F1}} fragment F0 on Stoptime "
+            +"{stop(id:$id_0) {id,...F2}} fragment F0 on Stoptime "
             +"{scheduledDeparture,realtime,realtimeDeparture,stopHeadsign,trip "
             +"{pattern {route {shortName}}}} fragment F1 on Stop "
+
+            +"{url,_stoptimesForServiceDateyplyP:stoptimesForServiceDate(date:\""
+            +date+"\") {pattern {headsign,code,route "
+            +"{id,shortName,longName,mode,agency {id,name}},id},stoptimes "
+            +"{scheduledDeparture,serviceDay,headsign,pickupType}},id} "
+            +"fragment F2 on Stop "
+
             +"{_stoptimesWithoutPatterns3xYh4D:stoptimesWithoutPatterns"
             +"(startTime:$startTime_1,timeRange:"+timeRange
-            +",numberOfDepartures:"+rowLimit+") {...F0},code,name}",
-          "variables":{"id_0":stopId,"startTime_1":now}
+            +",numberOfDepartures:"+rowLimit+") {...F0},code,name,...F1}",
+          "variables":{"id_0":stopId,"startTime_1":start}
         }),
         headers: { 'Content-Type': 'application/json' }
       }).then(res => res.json())
@@ -154,13 +172,27 @@ class TimeTable extends React.Component {
           if (result) {
             this.setState({
               stop: {'id': stopId, 'code': result.code, 'name': result.name},
-              timetable: this.processTimeTable(result._stoptimesWithoutPatterns3xYh4D)
+              timetable: this.processTimeTable(result._stoptimesWithoutPatterns3xYh4D),
+              lines: this.processLines(result._stoptimesForServiceDateyplyP)
             });
             this.setVisibleRows();
           }
         })
         .catch(err => console.log(err));
     }
+  }
+
+  processLines(data) {
+    let lines = data.map((item) => {
+      return item.pattern.route.shortName;
+    });
+    let uniqueLines = _.uniq(lines);
+    let sortedLines = _.sortBy(uniqueLines, [(line) => {
+      return parseInt(line);
+    }, (line) => {
+      return line;
+    }]);
+    return sortedLines;
   }
 
   refSecsToSecs(refSecs) {
@@ -203,6 +235,55 @@ class TimeTable extends React.Component {
     });
   }
 
+  isSelected(line, selectedLines) {
+    let lines = selectedLines || this.state.selectedLines;
+    return lines.indexOf(line) !== -1;
+  }
+
+  allButtonSelected(selectedLines) {
+    let lines = selectedLines || this.state.selectedLines;
+    return lines.length === this.state.lines.length;
+  }
+
+  allSelected(selectedLines) {
+    return this.allButtonSelected(selectedLines)
+      || this.state.selectedLines.length === 0;
+  }
+
+  toggleLine(line) {
+    let selectedLines = this.state.selectedLines.slice();
+    if (this.isSelected(line, selectedLines)) {
+      _.remove(selectedLines, (l) => { return l === line; });
+    } else {
+      selectedLines.push(line);
+    }
+    this.setVisibleRows(0, selectedLines);
+  }
+
+  toggleLines() {
+    let selectedLines = this.allButtonSelected() ? [] : this.state.lines;
+    this.setVisibleRows(0, selectedLines);
+  }
+
+  lineSelect() {
+    let buttons = this.state.lines.map((line) => {
+      let selected = this.isSelected(line) ? ' selected' : '';
+      return (
+        <button type="button" className={ 'btn btn-default btn-sm' + selected } onClick={ this.toggleLine.bind(this, line) } data-line={ line }>{ line }</button>
+      );
+    });
+    let allSelected = this.allButtonSelected() ? ' selected' : '';
+    let allButton = (
+      <button type="button" className={ 'btn btn-default btn-sm' + allSelected } onClick={ this.toggleLines.bind(this) } data-line={ "all" }>Kaikki linjat</button>
+    );
+    return (
+      <div className="line-buttons">
+        { allButton }
+        { buttons }
+      </div>
+    );
+  }
+
   showMore() {
     this.setVisibleRows(rowCount);
   }
@@ -227,6 +308,13 @@ class TimeTable extends React.Component {
         </tr>
       );
     });
+    let noRows = (
+      <tr className="no-rows small">
+        <td colSpan={4}>
+          Ei näytettäviä aikoja seuraavaan tuntiin. Valitse jokin toinen linja tai pysäkki.
+        </td>
+      </tr>
+    );
     let showMoreRow = (
       <tr className="show-more small" onClick={ this.showMore.bind(this) }>
         <td colSpan={4}>
@@ -249,7 +337,7 @@ class TimeTable extends React.Component {
           </tr>
         </thead>
         <tbody>
-          { rows }
+          { rows.length > 0 ? rows : noRows }
           { showMore }
         </tbody>
       </table>
@@ -269,6 +357,7 @@ class TimeTable extends React.Component {
             <h4 className="list-group-item-heading">{ (stop.name || '') + ' '}</h4>
             <span className="list-group-item-text small">{ stop.code || stop.id }</span>
           </div>
+          { this.lineSelect() }
           { this.timeTable() }
         </div>
       );
@@ -340,7 +429,7 @@ class App extends React.Component {
         </div>
       );
     });
-    let addStopButton = <button className="btn btn-success add-stop" onClick={ this.openModal }><i className="fa fa-plus" aria-hidden="true"></i>Lisää pysäkki</button>;
+    let addStopButton = <button className="btn btn-default add-stop" onClick={ this.openModal }><i className="fa fa-plus" aria-hidden="true"></i>Lisää pysäkki</button>;
     let content = (<div className="timetables">{ timetables }{ addStopButton }</div>);
     let modal;
     if (this.state.modalOpen) {

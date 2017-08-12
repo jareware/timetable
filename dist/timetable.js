@@ -36983,7 +36983,9 @@ var TimeTable = function (_React$Component2) {
       timetable: [],
       limit: rowCount,
       visibleRows: [],
-      hideShowMore: true
+      hideShowMore: true,
+      lines: [],
+      selectedLines: []
     };
     return _this4;
   }
@@ -36991,16 +36993,26 @@ var TimeTable = function (_React$Component2) {
   _createClass(TimeTable, [{
     key: 'setVisibleRows',
     value: function setVisibleRows() {
+      var _this5 = this;
+
       var addCount = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+      var newSelectedLines = arguments[1];
 
       var timetable = this.state.timetable;
-      var limit = Math.min(this.state.limit + addCount, rowLimit, timetable.length);
-      var visibleRows = timetable.slice(0, limit);
-      var hideShowMore = limit >= timetable.length;
+      var selectedLines = newSelectedLines || this.state.selectedLines;
+      var filteredRows = timetable.filter(function (item) {
+        return _this5.isSelected(item.line, selectedLines);
+      });
+      var showAll = this.isSelected('all', selectedLines) || selectedLines.length === 0;
+      var rows = showAll ? timetable : filteredRows;
+      var limit = Math.min(this.state.limit + addCount, rowLimit, rows.length);
+      var visibleRows = rows.slice(0, limit);
+      var hideShowMore = limit >= rows.length;
       this.setState({
         visibleRows: visibleRows,
-        limit: limit,
-        hideShowMore: hideShowMore
+        limit: Math.max(limit, rowCount),
+        hideShowMore: hideShowMore,
+        selectedLines: selectedLines
       });
     }
   }, {
@@ -37011,17 +37023,19 @@ var TimeTable = function (_React$Component2) {
   }, {
     key: 'queryStop',
     value: function queryStop(stopId) {
-      var _this5 = this;
+      var _this6 = this;
 
       if (stopId) {
         // Default: from one minute ago to one hour to the future
-        var now = Math.floor(Date.now() / 1000) - 60;
+        var now = new Date();
+        var start = Math.floor(now.getTime() / 1000) - 60;
+        var date = now.toISOString().slice(0, 10).replace(/[-]/g, "");
         var timeRange = 3600;
         fetch(apiUrl, {
           method: 'POST',
           body: JSON.stringify({
-            "query": "query StopPage($id_0:String!,$startTime_1:Long!) " + "{stop(id:$id_0) {id,...F1}} fragment F0 on Stoptime " + "{scheduledDeparture,realtime,realtimeDeparture,stopHeadsign,trip " + "{pattern {route {shortName}}}} fragment F1 on Stop " + "{_stoptimesWithoutPatterns3xYh4D:stoptimesWithoutPatterns" + "(startTime:$startTime_1,timeRange:" + timeRange + ",numberOfDepartures:" + rowLimit + ") {...F0},code,name}",
-            "variables": { "id_0": stopId, "startTime_1": now }
+            "query": "query StopPage($id_0:String!,$startTime_1:Long!) " + "{stop(id:$id_0) {id,...F2}} fragment F0 on Stoptime " + "{scheduledDeparture,realtime,realtimeDeparture,stopHeadsign,trip " + "{pattern {route {shortName}}}} fragment F1 on Stop " + "{url,_stoptimesForServiceDateyplyP:stoptimesForServiceDate(date:\"" + date + "\") {pattern {headsign,code,route " + "{id,shortName,longName,mode,agency {id,name}},id},stoptimes " + "{scheduledDeparture,serviceDay,headsign,pickupType}},id} " + "fragment F2 on Stop " + "{_stoptimesWithoutPatterns3xYh4D:stoptimesWithoutPatterns" + "(startTime:$startTime_1,timeRange:" + timeRange + ",numberOfDepartures:" + rowLimit + ") {...F0},code,name,...F1}",
+            "variables": { "id_0": stopId, "startTime_1": start }
           }),
           headers: { 'Content-Type': 'application/json' }
         }).then(function (res) {
@@ -37029,16 +37043,31 @@ var TimeTable = function (_React$Component2) {
         }).then(function (json) {
           var result = json.data.stop;
           if (result) {
-            _this5.setState({
+            _this6.setState({
               stop: { 'id': stopId, 'code': result.code, 'name': result.name },
-              timetable: _this5.processTimeTable(result._stoptimesWithoutPatterns3xYh4D)
+              timetable: _this6.processTimeTable(result._stoptimesWithoutPatterns3xYh4D),
+              lines: _this6.processLines(result._stoptimesForServiceDateyplyP)
             });
-            _this5.setVisibleRows();
+            _this6.setVisibleRows();
           }
         }).catch(function (err) {
           return console.log(err);
         });
       }
+    }
+  }, {
+    key: 'processLines',
+    value: function processLines(data) {
+      var lines = data.map(function (item) {
+        return item.pattern.route.shortName;
+      });
+      var uniqueLines = _.uniq(lines);
+      var sortedLines = _.sortBy(uniqueLines, [function (line) {
+        return parseInt(line);
+      }, function (line) {
+        return line;
+      }]);
+      return sortedLines;
     }
   }, {
     key: 'refSecsToSecs',
@@ -37074,12 +37103,12 @@ var TimeTable = function (_React$Component2) {
   }, {
     key: 'processTimeTable',
     value: function processTimeTable(data) {
-      var _this6 = this;
+      var _this7 = this;
 
       return data.map(function (item) {
-        var time = _this6.parseTime(item.scheduledDeparture);
-        var realTime = _this6.parseTime(item.realtimeDeparture);
-        var min = _this6.timeDiff(item.realtimeDeparture);
+        var time = _this7.parseTime(item.scheduledDeparture);
+        var realTime = _this7.parseTime(item.realtimeDeparture);
+        var min = _this7.timeDiff(item.realtimeDeparture);
         return {
           'time': time,
           'min': min,
@@ -37089,6 +37118,68 @@ var TimeTable = function (_React$Component2) {
           'dest': item.stopHeadsign
         };
       });
+    }
+  }, {
+    key: 'isSelected',
+    value: function isSelected(line, selectedLines) {
+      var lines = selectedLines || this.state.selectedLines;
+      return lines.indexOf(line) !== -1;
+    }
+  }, {
+    key: 'allButtonSelected',
+    value: function allButtonSelected(selectedLines) {
+      var lines = selectedLines || this.state.selectedLines;
+      return lines.length === this.state.lines.length;
+    }
+  }, {
+    key: 'allSelected',
+    value: function allSelected(selectedLines) {
+      return this.allButtonSelected(selectedLines) || this.state.selectedLines.length === 0;
+    }
+  }, {
+    key: 'toggleLine',
+    value: function toggleLine(line) {
+      var selectedLines = this.state.selectedLines.slice();
+      if (this.isSelected(line, selectedLines)) {
+        _.remove(selectedLines, function (l) {
+          return l === line;
+        });
+      } else {
+        selectedLines.push(line);
+      }
+      this.setVisibleRows(0, selectedLines);
+    }
+  }, {
+    key: 'toggleLines',
+    value: function toggleLines() {
+      var selectedLines = this.allButtonSelected() ? [] : this.state.lines;
+      this.setVisibleRows(0, selectedLines);
+    }
+  }, {
+    key: 'lineSelect',
+    value: function lineSelect() {
+      var _this8 = this;
+
+      var buttons = this.state.lines.map(function (line) {
+        var selected = _this8.isSelected(line) ? ' selected' : '';
+        return React.createElement(
+          'button',
+          { type: 'button', className: 'btn btn-default btn-sm' + selected, onClick: _this8.toggleLine.bind(_this8, line), 'data-line': line },
+          line
+        );
+      });
+      var allSelected = this.allButtonSelected() ? ' selected' : '';
+      var allButton = React.createElement(
+        'button',
+        { type: 'button', className: 'btn btn-default btn-sm' + allSelected, onClick: this.toggleLines.bind(this), 'data-line': "all" },
+        'Kaikki linjat'
+      );
+      return React.createElement(
+        'div',
+        { className: 'line-buttons' },
+        allButton,
+        buttons
+      );
     }
   }, {
     key: 'showMore',
@@ -37144,6 +37235,15 @@ var TimeTable = function (_React$Component2) {
           )
         );
       });
+      var noRows = React.createElement(
+        'tr',
+        { className: 'no-rows small' },
+        React.createElement(
+          'td',
+          { colSpan: 4 },
+          'Ei n\xE4ytett\xE4vi\xE4 aikoja seuraavaan tuntiin. Valitse jokin toinen linja tai pys\xE4kki.'
+        )
+      );
       var showMoreRow = React.createElement(
         'tr',
         { className: 'show-more small', onClick: this.showMore.bind(this) },
@@ -37189,7 +37289,7 @@ var TimeTable = function (_React$Component2) {
         React.createElement(
           'tbody',
           null,
-          rows,
+          rows.length > 0 ? rows : noRows,
           showMore
         )
       );
@@ -37226,6 +37326,7 @@ var TimeTable = function (_React$Component2) {
               stop.code || stop.id
             )
           ),
+          this.lineSelect(),
           this.timeTable()
         );
       }
@@ -37242,17 +37343,17 @@ var App = function (_React$Component3) {
   function App(props) {
     _classCallCheck(this, App);
 
-    var _this7 = _possibleConstructorReturn(this, (App.__proto__ || Object.getPrototypeOf(App)).call(this, props));
+    var _this9 = _possibleConstructorReturn(this, (App.__proto__ || Object.getPrototypeOf(App)).call(this, props));
 
-    var stopIds = _this7.getStopsFromHash();
-    _this7.state = {
+    var stopIds = _this9.getStopsFromHash();
+    _this9.state = {
       stopIds: stopIds,
       modalOpen: stopIds.length ? false : true
     };
 
-    _this7.openModal = _this7.openModal.bind(_this7);
-    _this7.closeModal = _this7.closeModal.bind(_this7);
-    return _this7;
+    _this9.openModal = _this9.openModal.bind(_this9);
+    _this9.closeModal = _this9.closeModal.bind(_this9);
+    return _this9;
   }
 
   _createClass(App, [{
@@ -37296,11 +37397,11 @@ var App = function (_React$Component3) {
   }, {
     key: 'render',
     value: function render() {
-      var _this8 = this;
+      var _this10 = this;
 
       var timetables = this.state.stopIds.map(function (stopId) {
         var timetableContent = void 0;
-        if (_this8.checkFormat(stopId)) {
+        if (_this10.checkFormat(stopId)) {
           timetableContent = React.createElement(TimeTable, { key: stopId, stopId: stopId });
         } else {
           timetableContent = React.createElement(
@@ -37315,7 +37416,7 @@ var App = function (_React$Component3) {
           { className: 'timetable-container col-sm-6' },
           React.createElement(
             'button',
-            { className: 'close', 'aria-label': 'Poista pys\xE4kki', onClick: _this8.removeStop.bind(_this8, stopId, _this8.state.stopIds) },
+            { className: 'close', 'aria-label': 'Poista pys\xE4kki', onClick: _this10.removeStop.bind(_this10, stopId, _this10.state.stopIds) },
             React.createElement('i', { className: 'fa fa-times', 'aria-hidden': 'true' })
           ),
           timetableContent
@@ -37323,7 +37424,7 @@ var App = function (_React$Component3) {
       });
       var addStopButton = React.createElement(
         'button',
-        { className: 'btn btn-success add-stop', onClick: this.openModal },
+        { className: 'btn btn-default add-stop', onClick: this.openModal },
         React.createElement('i', { className: 'fa fa-plus', 'aria-hidden': 'true' }),
         'Lis\xE4\xE4 pys\xE4kki'
       );
