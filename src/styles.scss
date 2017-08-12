@@ -32,6 +32,10 @@ body {
 .content {
   button:focus {
     outline: 0;
+
+    &:active {
+      outline: 0;
+    }
   }
 
   input {
@@ -101,11 +105,11 @@ button.add-stop {
   }
 
   button.close {
-    padding: 1.2rem;
+    padding: 1.2rem 1.2rem 0.6rem 0.6rem;
   }
 
   .stop-details {
-    padding: 1.2rem 1.2rem 0.5rem;
+    padding: 1.2rem 1.2rem 0.6rem;
 
     h4 {
       display: inline;
@@ -113,6 +117,20 @@ button.add-stop {
 
     span {
       color: $light-color;
+    }
+  }
+
+  .line-buttons {
+    padding: 0 0.7rem 0 1.2rem;
+
+    button {
+      margin: 0 0.5rem 0.5rem 0;
+
+      &.selected {
+        border-color: $realtime-color;
+        border-width: 2px;
+        padding: 4px 9px;
+      }
     }
   }
 
@@ -128,6 +146,11 @@ button.add-stop {
       .realtime {
         color: $extra-light;
       }
+    }
+
+    tr.show-more {
+      text-align: center;
+      cursor: pointer;
     }
 
     th,
